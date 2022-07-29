@@ -1,9 +1,9 @@
 """Run commands."""
+from pathlib import Path
 import click
 from kedro.framework.project import configure_project
 import sys
 from projetaai.utils.io import readtoml
-from projetaai.utils.constants import CWD
 
 
 def read_kedro_pyproject() -> dict:
@@ -15,7 +15,7 @@ def read_kedro_pyproject() -> dict:
     Returns:
         dict: The kedro section of the pyproject.toml file.
     """
-    pyproject = readtoml(str(CWD / 'pyproject.toml'))
+    pyproject = readtoml(str(Path.cwd() / 'pyproject.toml'))
     try:
         return pyproject['tool']['kedro']
     except KeyError as e:
@@ -28,6 +28,6 @@ def read_kedro_pyproject() -> dict:
 @click.pass_context
 def run(ctx: click.Context):
     """Project execution."""
-    sys.path.append(str(CWD / 'src'))
+    sys.path.append(str(Path.cwd() / 'src'))
     section = read_kedro_pyproject()
     configure_project(section['package_name'])
