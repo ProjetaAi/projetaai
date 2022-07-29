@@ -1,0 +1,121 @@
+@startuml
+
+autoactivate on
+
+actor Scientist
+boundary GitServer
+control CI
+control ProjetaAIAction
+control ProjetaAI.script
+boundary AzureCLI
+control AzureML
+control ProjetaAI
+database AzureBlob
+
+
+title ProjetaAI Action CI //(no watcher)//
+
+alt main branch
+  Scientist -> GitServer: push
+    GitServer -> CI: build
+      CI -> ProjetaAIAction: execute action
+        ProjetaAIAction -> ProjetaAI.script: run ProjetaAIToAzureML
+          ProjetaAI.script -> AzureCLI: build environment
+          return
+          ProjetaAI.script -> AzureCLI: build pipeline
+          return
+          ProjetaAI.script -> AzureCLI: schedule job
+          return
+        return
+      return
+    return
+  return
+  AzureML -> ProjetaAI: run scheduled job
+    ProjetaAI -> AzureBlob: store production data
+    return
+  return metrics
+
+else main branch with [ratify] tag
+  Scientist -> GitServer: push
+    GitServer -> CI: build
+      CI -> ProjetaAIAction: execute action
+        ProjetaAIAction -> ProjetaAI.script: run ProjetaAIToAzureML
+          ProjetaAI.script -> AzureCLI: build environment
+          return
+          ProjetaAI.script -> AzureCLI: build pipeline
+          return
+          ProjetaAI.script -> AzureCLI: run job
+          return
+        return
+        ProjetaAIAction -> ProjetaAI.script: run UpdateCaches
+        return
+        ProjetaAIAction -> GitServer: new commit/push
+        return
+      return
+    return
+    GitServer -> CI: build
+      CI -> ProjetaAIAction: execute action
+        ProjetaAIAction -> ProjetaAI.script: run ProjetaAIToAzureML
+          ProjetaAI.script -> AzureCLI: build environment
+          return
+          ProjetaAI.script -> AzureCLI: build pipeline
+          return
+          ProjetaAI.script -> AzureCLI: schedule job
+          return
+        return
+      return
+    return
+  return
+  AzureML -> ProjetaAI: run job
+    ProjetaAI -> AzureBlob: store production data
+    return
+  return metrics
+  AzureML -> ProjetaAI: run scheduled job
+    ProjetaAI -> AzureBlob: store production data
+    return
+  return metrics
+
+else develop branch, or feature/* branch with [run] tag
+  Scientist -> GitServer: push
+    GitServer -> CI: build
+      CI -> ProjetaAIAction: execute action
+        ProjetaAIAction -> ProjetaAI.script: run ProjetaAIToAzureML
+          ProjetaAI.script -> AzureCLI: build environment
+          return
+          ProjetaAI.script -> AzureCLI: build pipeline
+          return
+          ProjetaAI.script -> AzureCLI: run job
+          return
+        return
+      return
+    return
+  return
+  AzureML -> ProjetaAI: run job
+  return metrics
+
+else from develop to main branch
+  Scientist -> GitServer: pull request
+    GitServer -> CI: build
+      CI -> ProjetaAIAction: execute action
+        ProjetaAIAction -> AzureML: get production metrics
+        return production
+        ProjetaAIAction -> AzureML: get development metrics
+        return develop
+        ProjetaAIAction -> ProjetaAIAction: generate report
+        return report
+        ProjetaAIAction -> GitServer: comment report on pr
+        return
+      return
+    return
+  return
+end
+
+center footer
+this diagram propses a CI action without any
+dedicated watcher server to perform real-time
+processes. LogicApps, a hosted GitHub App, or
+a Function triggered by the pipeline, can
+improve this process
+endfooter
+
+@enduml

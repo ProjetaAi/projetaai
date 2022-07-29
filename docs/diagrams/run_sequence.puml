@@ -1,0 +1,38 @@
+@startuml
+autoactivate on
+
+title ProjetaAI Run Sequence Diagram
+
+actor Scientist
+boundary ProjetaAICLI
+control ProjetaAI
+control Kedro
+control ProjetaAIConfigLoader
+database Disk
+
+Scientist -> ProjetaAICLI: projetaai run
+  ProjetaAICLI -> ProjetaAICLI: parse_args()
+  return kwargs
+  ProjetaAICLI -> ProjetaAI: run(*kwargs)
+    ProjetaAI -> ProjetaAI: create_settings()
+      ProjetaAI -> Disk: write_file()
+      return
+    return
+    ProjetaAI -> ProjetaAI: create_pipeline_registry()
+      ProjetaAI -> Disk: write_file()
+      return
+    return
+    ProjetaAI -> ProjetaAI: parse_kedro()
+    return kedro_kwargs
+    ProjetaAI -> Kedro: call_kedro(**kedro_kwargs)
+      Kedro -> ProjetaAIConfigLoader: load_config()
+        ProjetaAIConfigLoader -> Disk: load_ymls()
+        return parameters
+      return configs
+      Kedro -> Kedro: main()
+      return log
+    return log
+  return log
+return log
+
+@enduml

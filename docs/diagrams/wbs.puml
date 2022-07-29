@@ -1,0 +1,47 @@
+@startwbs
+
+title ProjetaAI Development WBS
+
+* ProjetaAI
+** 1. Research
+***:Pipeline managing
+framework choice;
+****_ Kedro
+*** Cloud runner choice
+****_ AzureML
+
+** 2. Components
+*** Predictor framework
+*** Hooks
+****_ Tracking
+****_ IO
+****_ Utils
+*** AzureML converter
+***:CI and automatization
+of processes;
+****:'main' branch for
+production;
+***** Dash updates
+****:'develop' branch for
+testing;
+****:'experiment/*' for
+experiments;
+*****:Compares with our
+current results on pr;
+
+** 3. Structure
+*** Define our backend
+*** Encapsulate components
+*** Reexport only what we need
+
+** 4. Extension
+*** POCs
+**** Centralize and standardize data
+**** Predictor algorithms
+*****_ Prophet
+*****_ ...
+
+** 5. Post mortem
+*** Feature store
+
+@endwbs

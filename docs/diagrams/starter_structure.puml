@@ -1,0 +1,44 @@
+@startsalt
+
+title ProjetaAI Starter Structure
+
+{
+{T
++ **<<PROJECT>>**                   | **Description**
+++ conf/                            | configs folder
++++ base/                           | pipeline files
+++++ parameters/                    | constants as inputs
++++++ <<PIPELINE>>.yml              | pipeline parameters
+++++ predictors/                    | predictors configurators
++++++ <<PIPELINE>>.yml              | pipeline predictor
++++ local/                          | non-commited parameters
+++++ credentials.yml                | credentials for catalog
++++ catalog.yml                     | io data configurators
++++ logging.yml                     | logging settings
++++ globals.yml                     | constants for templating
+++ logs/                            | execution logs folder
+++ notebooks/                       | jupyter notebooks folder
+++ src/                             | code
++++ <<PROJECT>>/                    | project code folder
+++++ pipelines/                     | pipelines code folder
++++++ <<PIPELINE>>/                 | pipeline specific code folder
++++++ nodes/                        | nodes code folder
+++++++ example.py                   | node code file
+++++++ pipeline.py                  | pipeline creation folder
+++++ extras/                        | kedro/projetaai extensions
+++++ utils/                         | utilitary code
+++++ tests                          | unit tests folder
++++++ conftest.py                   | global pytest fixtures
++++++ pipelines/                    | pipelines unit test
+++++++ <<PIPELINE>>                 | pipeline specific code folder
++++++++ test.py                     | unit test code
+++++ settings.yml                   | projetaai settings file
+++++ hooks.py                       | hook register file
+++++ pipelines.py                   | pipeline registration file
++ setup.cfg                         | installation specification
++ pyproject.toml                    | project/tools constants
++ README.md                         | project description
++ azure_pipelines.yml               | ci/cd pipeline
+}
+}
+@endsalt
