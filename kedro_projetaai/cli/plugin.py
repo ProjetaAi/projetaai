@@ -1,36 +1,9 @@
 """Package containing CLI plugin creation tools."""
-from itertools import zip_longest
-from typing import Dict, List, Union
+from typing import Dict, Iterator, List, Union
 from click import Command, Group
 import click
-from projetaai.utils.iterable import optionaltolist
-
-_COMMAND_AS_GROUP_FLAG = 'command_as_group'
-
-
-def command_as_group(cmd: Command) -> Command:
-    """Decorator that sets a flag for a CLI command as the group default.
-
-    Args:
-        cmd (click.Command): CLI command to set as the group default.
-
-    Returns:
-        click.Command: CLI command with the group default flag set.
-    """
-    setattr(cmd, _COMMAND_AS_GROUP_FLAG, True)
-    return cmd
-
-
-def _is_command_as_group(cmd: Command) -> bool:
-    """Returns whether a CLI command is the group default.
-
-    Args:
-        cmd (click.Command): CLI command to check.
-
-    Returns:
-        bool: Whether the CLI command is the group default.
-    """
-    return hasattr(cmd, _COMMAND_AS_GROUP_FLAG)
+from kedro_projetaai.utils.iterable import optionaltolist
+from kedro_projetaai.cli.constants import CLI_MODULES
 
 
 class ProjetaAiCLIPlugin:
@@ -64,8 +37,8 @@ class ProjetaAiCLIPlugin:
         ...    def pipeline(self) -> Union[Command, List[Command]]:
         ...        return print_option  # or as list if multiple
         >>> MyPlugin().get_commands()  # doctest: +NORMALIZE_WHITESPACE
-        {'model': [<Group register>, <Group deploy>, <Command print-option>],
-         'pipeline': [<Group create>, <Command print-option>]}
+        {'model': [<Command print-option>, <Group deploy>, <Group register>],
+         'pipeline': [<Command print-option>, <Group create>]}
     """
 
     @property
@@ -75,7 +48,7 @@ class ProjetaAiCLIPlugin:
         Returns:
             List[Command]: List of credential commands.
         """
-        return []
+        pass
 
     @property
     def credential_create(self) -> Union[Command, List[Command]]:
@@ -203,52 +176,47 @@ class ProjetaAiCLIPlugin:
         """
         pass
 
-    def get_commands(self) -> Dict[str, List[Command]]:
+    def _get_commands(
+        self,
+        group: Group,
+        commands: List[Union[Command, Group]],
+        parts: Iterator[str],
+        part: str,
+    ) -> Group:
+        if group is None or group.name != part:
+            return self._get_commands(click.Group(part), commands, parts, part)
+        elif group.name == part:
+            part = next(parts, None)
+            if part is None:
+                for command in commands:
+                    group.add_command(command)
+            else:
+                group.add_command(
+                    self._get_commands(
+                        group.commands.get(part, None), commands, parts, part
+                    )
+                )
+            return group
+
+    def get_commands(self) -> Dict[str, List[Union[Command, Group]]]:
         """Return all commands of this plugin.
 
         Returns:
             List[Command]: List of commands.
         """
-        subgroups = {}
-        for subgroup in [
-            'credential',
-            'model',
-            'pipeline',
-            'run',
-            'datastore',
-            'catalog',
-        ]:
-            stack: List[Group] = [click.Group(subgroup)]
-            derived_methods: List[str] = sorted([
-                method for method in dir(self) if method.startswith(subgroup)
-            ], reverse=True)
+        groups = {}
+        for group_name in CLI_MODULES:
+            group = Group(group_name)
+            for method in dir(self):
+                if method.startswith(group_name):
+                    commands = optionaltolist(getattr(self, method))
+                    if commands:
+                        method_parts = iter(method.split('_'))
+                        self._get_commands(
+                            group, commands, method_parts, next(method_parts)
+                        )
 
-            for method in derived_methods:
+            if group.commands:
+                groups[group_name] = list(group.commands.values())
 
-                method_cmds = getattr(self, method)
-                if method_cmds:
-                    for i, (part, group) in enumerate(
-                        zip_longest(method.split('_'), stack, fillvalue=None)
-                    ):
-                        if part is None:  # no more parts
-                            stack = stack[:i]
-                            break
-
-                        click_group = click.Group(part)
-                        if not group:  # new group
-                            stack[-1].add_command(click_group)
-                            stack.append(click_group)
-
-                        elif group.name != part:  # clean and new group
-                            stack = stack[:i]
-                            stack[-1].add_command(click_group)
-                            stack.append(click_group)
-
-                    for cmd in optionaltolist(method_cmds):
-                        stack[-1].add_command(cmd)
-
-            commands = list(stack[0].commands.values())
-            if commands:
-                subgroups[subgroup] = commands
-
-        return subgroups
+        return groups

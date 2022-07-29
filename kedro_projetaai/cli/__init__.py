@@ -1,2 +1,2 @@
 """ProjetaAi CLI Commands extension package."""
-from .plugin import ProjetaAiCLIPlugin
+from kedro_projetaai.cli.plugin import ProjetaAiCLIPlugin
