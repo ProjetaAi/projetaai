@@ -1,6 +1,5 @@
 """Run commands."""
 import click
-from kedro.framework.cli.project import run as kedro_run
 from kedro.framework.project import configure_project
 import sys
 from projetaai.utils.io import readtoml
@@ -32,7 +31,3 @@ def run(ctx: click.Context):
     sys.path.append(str(CWD / 'src'))
     section = read_kedro_pyproject()
     configure_project(section['package_name'])
-
-
-kedro_run.help = 'Runs locally.'
-run.add_command(kedro_run, name='kedro')

@@ -1,19 +1,11 @@
 """ProjetaAi CLI extension pack setup."""
-from typing import Dict, List, Type
+from typing import Dict, List, Sequence, Type, Union
 import click
 import importlib
 import importlib.metadata
 
-from projetaai.plugins.cli.cli import CLIPlugin, _is_command_as_group
-
-_CLI_MODULES = [
-    'model',
-    'pipeline',
-    'credential',
-    'catalog',
-    'datastore',
-    'run',
-]
+from kedro_projetaai.cli.plugin import ProjetaAiCLIPlugin
+from kedro_projetaai.cli.constants import CLI_MODULES, CLI_MODULES_HELP
 
 
 @click.group()
@@ -30,14 +22,16 @@ def _import_subgroups() -> Dict[str, click.Group]:
         Dict[str, click.Group]: Groups by name.
     """
     subgroups = {}
-    for cli_module in _CLI_MODULES:
+    for cli_module in CLI_MODULES:
         try:
             cli_mod = importlib.import_module(
-                f'projetaai._framework.cli.{cli_module}'
+                f'kedro_projetaai.cli.{cli_module}'
             )
             subgroups[cli_module] = getattr(cli_mod, cli_module)
         except Exception:
-            pass
+            subgroups[cli_module] = click.Group(
+                cli_module, help=CLI_MODULES_HELP.get(cli_module, '')
+            )
     return subgroups
 
 
@@ -49,9 +43,9 @@ def _import_plugins() -> Dict[str, Dict[str, List[click.Command]]]:
             Commands by subgroup by plugins.
     """
     entry_points = importlib.metadata.entry_points()
-    plugins: Dict[str, Type[CLIPlugin]] = {
+    plugins: Dict[str, Type[ProjetaAiCLIPlugin]] = {
         plugin.name: plugin.load()
-        for plugin in entry_points.get('projetaai.plugins.cli', [])
+        for plugin in entry_points.get('projetaai.cli', [])
     }
 
     plugins_commands = {}
@@ -64,9 +58,52 @@ def _import_plugins() -> Dict[str, Dict[str, List[click.Command]]]:
     return plugins_commands
 
 
+def _count_commands(
+    commands: Sequence[Union[click.Command, click.Group]]
+) -> int:
+    return sum(not isinstance(command, click.Group) for command in commands)
+
+
+def _preprocess_group(
+    plugin: str,
+    group: click.Group,
+    command_or_group: Union[click.Command, click.Group],
+    length: int,
+):
+    if isinstance(command_or_group, click.Group):
+        commands = tuple(command_or_group.commands.values())
+        for command in commands:
+            _preprocess_group(
+                plugin, command_or_group, command, _count_commands(commands)
+            )
+        group.add_command(command_or_group)
+    elif length == 1:
+        if command_or_group.name in group.commands:
+            del group.commands[command_or_group.name]
+        command_or_group.name = plugin
+        group.add_command(command_or_group)
+    else:
+        plugin_group = group.commands.get(plugin, click.Group(plugin))
+        plugin_group.add_command(command_or_group)
+        group.add_command(plugin_group)
+
+
+def _preprocess_plugins(
+    groups: Dict[str, click.Group],
+    plugins: Dict[str, Dict[str, List[Union[click.Command, click.Group]]]],
+):
+    for plugin, plugin_groups in plugins.items():
+        for group_name, base_group in groups.items():
+            commands = plugin_groups.get(group_name, [])
+            for group_or_command in commands:
+                _preprocess_group(
+                    plugin, base_group, group_or_command,
+                    _count_commands(commands)
+                )
+
+
 def _install_plugins(
-    entry: click.Group,
-    subgroups: Dict[str, click.Group],
+    entry: click.Group, subgroups: Dict[str, click.Group],
     plugins: Dict[str, Dict[str, List[click.Command]]]
 ):
     """Installs plugins into the CLI.
@@ -77,22 +114,8 @@ def _install_plugins(
         plugins (Dict[str, Dict[str, List[click.Command]]]):
             Commands by subgroup by plugins.
     """
-    for group_name, group in subgroups.items():
-        for plugin_name, plugin_commands in plugins.items():
-            plugin_group = click.Group(plugin_name)
-            commands = plugin_commands.get(group_name, [])
-            for command in commands:
-                if _is_command_as_group(command):
-                    assert len(commands) == 1, f'"{command}" is default but ' \
-                        f'other commands are defined under "{group_name}" ' \
-                        f'in the plugin "{plugin_name}"'
-                    command.name = plugin_name
-                    group.add_command(command)
-                    break
-                else:
-                    plugin_group.add_command(command)
-            else:
-                group.add_command(plugin_group)
+    _preprocess_plugins(subgroups, plugins)
+    for group in subgroups.values():
         entry.add_command(group)
 
 

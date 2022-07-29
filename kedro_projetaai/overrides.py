@@ -6,6 +6,14 @@ from projetaai.utils.iterable import get_nested
 from projetaai.utils.typing import T
 
 
+class ProjetaAiOverrides:
+    """Fake Kedro hook to enable ProjetaAi overrides."""
+
+    def __init__(self):
+        """Initialize ProjetaAi overrides."""
+        override_get_credentials()
+
+
 def override_get_credentials():
     """Enable nested dictionaries in get_credentials.
 
