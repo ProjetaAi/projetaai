@@ -81,7 +81,7 @@ class Step(Callable):
         return out
 
 
-def pipe(*args: Step):
+def pipe(*args: Step, initial_dict: dict = None) -> dict:
     """Runs steps sequentially accumulating its outputs.
 
     Args:
@@ -106,6 +106,7 @@ def pipe(*args: Step):
         ✓ finished my step2
         <BLANKLINE>
     """
-    kwargs = {}
+    kwargs = initial_dict or {}
     for step in args:
         kwargs.update(step.from_dict(kwargs)())
+    return kwargs
