@@ -105,6 +105,7 @@ def pipe(*args: Step, initial_dict: dict = None) -> dict:
         1
         ✓ finished my step2
         <BLANKLINE>
+        {'a': 1}
     """
     kwargs = initial_dict or {}
     for step in args:

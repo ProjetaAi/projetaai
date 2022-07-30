@@ -91,15 +91,47 @@ def _preprocess_group(
 def _preprocess_plugins(
     groups: Dict[str, click.Group],
     plugins: Dict[str, Dict[str, List[Union[click.Command, click.Group]]]],
-):
+) -> Dict[str, Dict[str, click.Group]]:
+    """Performs changes in raw groups from plugins.
+
+    Args:
+        groups (Dict[str, click.Group]): Subgroups by name.
+        plugins (Dict[str, Dict[str, List[Union[click.Command, click.Group]]]])
+
+    Returns:
+        Dict[str, Dict[str, click.Group]]: Plugins subgroups by name.
+    """
+    processed_plugins = {}
     for plugin, plugin_groups in plugins.items():
-        for group_name, base_group in groups.items():
+        processed_groups = {}
+        for group_name in groups:
+            clean_group = click.Group(group_name)
             commands = plugin_groups.get(group_name, [])
             for group_or_command in commands:
                 _preprocess_group(
-                    plugin, base_group, group_or_command,
+                    plugin, clean_group, group_or_command,
                     _count_commands(commands)
                 )
+            processed_groups[group_name] = clean_group
+        processed_plugins[plugin] = processed_groups
+    return processed_plugins
+
+
+def _merge_groups(a: Dict[str, click.Group], b: Dict[str, click.Group]):
+    """Merge two click groups into the first.
+
+    Args:
+        a (Dict[str, click.Group]): First group.
+        b (Dict[str, click.Group]): Second group.
+    """
+    for key in b:
+        if (
+            key in a and isinstance(a[key], click.Group)
+            and isinstance(b[key], click.Group)
+        ):
+            _merge_groups(a[key].commands, b[key].commands)
+        else:
+            a[key] = b[key]
 
 
 def _install_plugins(
@@ -114,9 +146,11 @@ def _install_plugins(
         plugins (Dict[str, Dict[str, List[click.Command]]]):
             Commands by subgroup by plugins.
     """
-    _preprocess_plugins(subgroups, plugins)
-    for group in subgroups.values():
-        entry.add_command(group)
+    processed_plugins = _preprocess_plugins(subgroups, plugins)
+    for plugin_subgroups in processed_plugins.values():
+        _merge_groups(subgroups, plugin_subgroups)
+    for subgroup in subgroups.values():
+        entry.add_command(subgroup)
 
 
 def setup_cli() -> click.Group:
