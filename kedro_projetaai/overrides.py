@@ -2,8 +2,8 @@
 from typing import Dict
 from kedro.io import data_catalog
 
-from projetaai.utils.iterable import get_nested
-from projetaai.utils.typing import T
+from kedro_projetaai.utils.iterable import get_nested
+from kedro_projetaai.utils.typing import T
 
 
 class ProjetaAiOverrides:

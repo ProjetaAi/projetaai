@@ -5,7 +5,7 @@ from dataclasses import dataclass, fields
 from typing import Callable, ClassVar, Dict, Union
 from typing_extensions import Literal
 
-from projetaai.utils.string import to_snake_case
+from kedro_projetaai.utils.string import to_snake_case
 
 
 @dataclass

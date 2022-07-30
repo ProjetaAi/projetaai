@@ -3,7 +3,7 @@
 from functools import reduce
 from typing import Dict, List
 
-from projetaai.utils.typing import T
+from kedro_projetaai.utils.typing import T
 
 
 def tolist(val: T) -> List[T]:

@@ -13,7 +13,7 @@ addopts = """
 --cov-report html \
 --ignore=kedro_projetaai/templates \
 --junitxml=junit/test-results.xml \
---cov projetaai -ra"""
+--cov kedro_projetaai -ra"""
 
 [tool.coverage.report]
 exclude_lines = ["pragma: no cover", "raise NotImplementedError"]

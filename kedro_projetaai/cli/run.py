@@ -3,7 +3,7 @@ from pathlib import Path
 import click
 from kedro.framework.project import configure_project
 import sys
-from projetaai.utils.io import readtoml
+from kedro_projetaai.utils.io import readtoml
 
 
 def read_kedro_pyproject() -> dict:
