@@ -4,6 +4,8 @@ from click import Command, Group
 import click
 from kedro_projetaai.utils.iterable import optionaltolist
 from kedro_projetaai.cli.constants import CLI_MODULES
+from kedro.framework.cli.starters import KedroStarterSpec
+from attr import define
 
 
 class ProjetaAiCLIPlugin:
@@ -220,3 +222,47 @@ class ProjetaAiCLIPlugin:
                 groups[group_name] = list(group.commands.values())
 
         return groups
+
+
+@define(order=True)
+class CIStarterSpec(KedroStarterSpec):
+    """Same as KedroStarterSpec, but for creating CI yamls.
+
+    To create a CI starter, you must first create a variable that holds a list
+    of CIStarterSpec objects. These objects contain the repository that stores
+    the starter and what folder contains it.
+
+    Example:
+        >>> my_starters = [
+        ...     CIStarterSpec(
+        ...         alias="my-starter",
+        ...         template_path="git+https://github.com/abc/def.git",
+        ...         directory="my-starter/template")
+
+        Then you must point an entry point to this variable like this:
+
+        .. code-block:: cfg
+
+            #setup.cfg
+            [options.entry_points]
+            projetaai.starters.ci =
+                myplugin = kedro_projetaai.starters:my_starters
+
+    Attributes:
+        alias (str): Alias for the starter.
+        template_path (str): Path to the starter template.
+        move_to_root (bool): Whether to move the cookiecutter folder contents
+            to the root of the project.
+
+    Note:
+        When creating a CI starter, some variables builtin variables are
+        available to the template. These are:
+
+        - `_pipelines`: CIStarterSpec alias
+        - `__python_version`: Python version
+
+    See Also:
+        [CI Starter Templates](https://github.com/ProjetaAi/projetaai-starters/tree/main/for_plugins/ci) # noqa: E501
+    """
+
+    move_to_root: bool = False

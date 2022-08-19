@@ -5,7 +5,11 @@ import importlib
 import importlib.metadata
 
 from kedro_projetaai.cli.plugin import ProjetaAiCLIPlugin
-from kedro_projetaai.cli.constants import CLI_MODULES, CLI_MODULES_HELP
+from kedro_projetaai.cli.constants import (
+    CLI_MODULES,
+    CLI_MODULES_HELP,
+    ENTRY_POINTS,
+)
 
 
 @click.group()
@@ -45,7 +49,7 @@ def _import_plugins() -> Dict[str, Dict[str, List[click.Command]]]:
     entry_points = importlib.metadata.entry_points()
     plugins: Dict[str, Type[ProjetaAiCLIPlugin]] = {
         plugin.name: plugin.load()
-        for plugin in entry_points.get('projetaai.cli', [])
+        for plugin in entry_points.get(ENTRY_POINTS['CLI'], [])
     }
 
     plugins_commands = {}
@@ -61,6 +65,15 @@ def _import_plugins() -> Dict[str, Dict[str, List[click.Command]]]:
 def _count_commands(
     commands: Sequence[Union[click.Command, click.Group]]
 ) -> int:
+    """Count the number of commands in a list of commands or groups.
+
+    Args:
+        commands (Sequence[Union[click.Command, click.Group]]):
+            List of commands.
+
+    Returns:
+        int: Number of commands.
+    """
     return sum(not isinstance(command, click.Group) for command in commands)
 
 
