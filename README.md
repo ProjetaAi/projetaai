@@ -15,5 +15,4 @@ between ProjetaAi/Kedro and a cloud solution.
 
 ## Wip
 
-- ProjetaAi starter
 - Local deployment (HTTP)
