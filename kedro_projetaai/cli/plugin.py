@@ -237,7 +237,7 @@ class CIStarterSpec(KedroStarterSpec):
         ...     CIStarterSpec(
         ...         alias="my-starter",
         ...         template_path="git+https://github.com/abc/def.git",
-        ...         directory="my-starter/template")
+        ...         directory="my-starter/template")]
 
         Then you must point an entry point to this variable like this:
 

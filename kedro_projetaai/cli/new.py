@@ -50,6 +50,13 @@ def ci(starter: str, checkout: str):
     if template.move_to_root:
         root = os.path.dirname(folder)
         move_files(folder, root)
+        folder = root
+
+    click.echo(f'CI configuration created in {folder}')
+    click.echo('Please review the configuration and commit it to your repo.')
+    click.echo('You may find instruction about how to use it in '
+               f'{template.template_path} under '
+               f'{template.directory}/README.md')
 
 
 new.add_command(ci)
