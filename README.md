@@ -12,7 +12,3 @@ extends Kedro in order to enable cloud solutions into a Kedro environment.
 `kedro_projetaai.cli.plugin.ProjetaAiCLIPlugin` provides an interface with
 predefined commands to inherit and override in order to create new integrations
 between ProjetaAi/Kedro and a cloud solution.
-
-## Wip
-
-- Local deployment (HTTP)
