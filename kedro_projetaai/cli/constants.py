@@ -16,7 +16,6 @@ CLI_MODULES = [
 CLI_MODULES_HELP = {
     'credential': 'Credentials YML management.',
     'datastore': 'Storage pointers management.',
-    'model': 'Model deploy and registration management.',
 }
 
 ENTRY_POINTS = {

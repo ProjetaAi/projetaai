@@ -89,17 +89,8 @@ class ProjetaAiCLIPlugin:
         pass
 
     @property
-    def model_deploy_batch(self) -> Union[Command, List[Command]]:
-        """Commands for creating a batch inference endpoint.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
-        pass
-
-    @property
-    def model_deploy_realtime(self) -> Union[Command, List[Command]]:
-        """Commands for creating a realtime inference endpoint.
+    def model_deploy(self) -> Union[Command, List[Command]]:
+        """Commands for creating an inference endpoint.
 
         Returns:
             Union[Command, List[Command]]: Command or list of commands.
