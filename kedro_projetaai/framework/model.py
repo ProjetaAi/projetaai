@@ -1,5 +1,6 @@
 """Inference script and model management backend."""
 import inspect
+import sys
 from kedro.io import DataCatalog
 import importlib.machinery
 from typing import Callable, Protocol, Tuple, Union, runtime_checkable, Any
@@ -9,7 +10,14 @@ ValidResponses = Union[str, list, tuple, dict]
 
 
 class ScriptException(Exception):
-    """Exception for script errors."""
+    """Exception for script errors.
+
+    Example:
+        >>> raise ScriptException('Script error') #doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        ...
+        model.ScriptException: Script error
+    """
 
     pass
 
@@ -24,6 +32,13 @@ def assert_script(condition: bool, message: str = 'Invalid request'):
 
     Raises:
         ScriptException: if the condition fails.
+
+    Example:
+        >>> assert_script(True, 'Invalid request')  # doctest: +ELLIPSIS
+        >>> assert_script(False, 'Invalid request')  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        ...
+        model.ScriptException: Invalid request
     """
     if not condition:
         raise ScriptException(message)
@@ -42,7 +57,7 @@ class ScriptSpec(Protocol):
         Returns:
             Any: Resource, usually the model.
         """
-        ...
+        ...  # pragma: no cover
 
     def prepare(data: Any) -> Any:
         """Prepares the request data for prediction.
@@ -53,7 +68,7 @@ class ScriptSpec(Protocol):
         Returns:
             Any: prepared data.
         """
-        ...
+        ...  # pragma: no cover
 
     def predict(model: Any, data: Any) -> ValidResponses:
         """Makes a prediction of a given request.
@@ -65,17 +80,29 @@ class ScriptSpec(Protocol):
         Returns:
             Any: prediction.
         """
-        ...
+        ...  # pragma: no cover
 
 
 def _get_script(script: str) -> ScriptSpec:
-    """Get the functions from the script."""
+    """Get the functions from the script.
+
+    Args:
+        script (str): path to the script.
+
+    Returns:
+        ScriptSpec: script module.
+    """
+    if 'script' in sys.modules:
+        del sys.modules['script']
+
     mod = importlib.machinery.SourceFileLoader("script", script).load_module()
+
     assert isinstance(mod, ScriptSpec),\
         ('Script doesn\'t implement all the following functions:\n'
          + '\n'.join([str(inspect.signature(getattr(ScriptSpec, fn)))
                       for fn in dir(ScriptSpec)
                       if not fn.startswith('_')]))
+
     return mod
 
 

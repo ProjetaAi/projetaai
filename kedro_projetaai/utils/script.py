@@ -10,7 +10,34 @@ from kedro_projetaai.utils.string import to_snake_case
 
 @dataclass
 class Step(Callable):
-    """Base class for sequential steps."""
+    """Base class for sequential steps.
+
+    Example:
+        >>> class MyStep(Step):
+        ...     def run(self):  # must implement this method
+        ...         a = 1
+        ...         self.log('info', 'doing math')
+        ...         a = a + 10
+        ...         return {'a': a}
+        >>> step = MyStep()
+        >>> step
+        MyStep()
+        >>> step()
+        🕒 running my step
+        🛈 doing math
+        ✓ finished my step
+        <BLANKLINE>
+        {'a': 11}
+
+        >>> class MyStep(Step):
+        ...     def run(self):
+        ...         raise Exception('something went wrong')
+        >>> step = MyStep()
+        >>> step()  # doctest: +ELLIPSIS
+        Traceback (most recent call last):
+        ...
+        Exception: something went wrong
+    """
 
     __MARKERS: ClassVar[Dict[str, str]] = {
         'done': '\N{check mark}',
@@ -42,7 +69,19 @@ class Step(Callable):
         print(message)
 
     def log_ignored(self):
-        """Logs a step ignored message."""
+        """Logs a step ignored message.
+
+        Example:
+            >>> class MyStep(Step):
+            ...     def run(self):
+            ...         self.log_ignored()
+            >>> MyStep()()
+            🕒 running my step
+            🛈 my step ignored
+            ✓ finished my step
+            <BLANKLINE>
+            {}
+        """
         self.log('info', f'{self.formatted_class_name} ignored')
 
     @property
@@ -59,7 +98,7 @@ class Step(Callable):
     @abstractmethod
     def run(self) -> Union[None, dict]:
         """Executes the step logic."""
-        pass
+        pass  # pragma: no cover
 
     def __call__(self) -> dict:
         """Executes the step logic.
