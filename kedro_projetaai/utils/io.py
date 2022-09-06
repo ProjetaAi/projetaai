@@ -14,7 +14,7 @@ def readtoml(filepath: str) -> dict:
         dict
 
     Example:
-        >>> path = fs.create_file('test.toml', '[a]\nb = 1')
+        >>> path = fs.write('test.toml', '[a]\nb = 1')
         >>> readtoml(path)
         {'a': {'b': 1}}
     """
@@ -33,25 +33,23 @@ def move_files(source: str, destination: str):
         destination (str): Destination folder
 
     Example:
-        >>> source = fs.create_folder('source')
-        >>> _ = fs.create_file('source/folder/file1.txt', 'content')
-        >>> _ = fs.create_file('source/file1.txt', 'content')
-        >>> _ = fs.create_file('source/file2.txt', 'content')
-        >>> destination = fs.create_folder('destination')
+        >>> source = fs.mkdir('source')
+        >>> _ = fs.write('source/folder/file1.txt', 'content')
+        >>> _ = fs.write('source/file1.txt', 'content')
+        >>> _ = fs.write('source/file2.txt', 'content')
+        >>> destination = fs.mkdir('destination')
 
-        >>> _ = fs.create_file('destination/file1.txt', 'overwriteme')
-        >>> _ = fs.create_file('destination/folder/file1.txt', 'overwriteme')
+        >>> _ = fs.write('destination/file1.txt', 'overwriteme')
+        >>> _ = fs.write('destination/folder/file1.txt', 'overwriteme')
         >>> move_files(source, destination)
-        >>> sorted(os.listdir(destination))
+        >>> fs.ls('destination')
         ['file1.txt', 'file2.txt', 'folder']
 
         Overwrites files and folders if they already exist.
 
-        >>> with open('destination/file1.txt', 'r') as f:
-        ...     f.read()
+        >>> fs.read('destination/file1.txt')
         'content'
-        >>> with open('destination/folder/file1.txt', 'r') as f:
-        ...     f.read()
+        >>> fs.read('destination/folder/file1.txt')
         'content'
     """
     for file in os.listdir(source):

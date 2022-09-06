@@ -2,6 +2,7 @@
 import logging
 import pytest
 from pprint import pprint
+from kedro_pytest import TestKedro
 
 
 @pytest.fixture(autouse=True)
@@ -11,6 +12,7 @@ def disable_logging(doctest_namespace: dict):
 
 
 @pytest.fixture(autouse=True)
-def add_libs(doctest_namespace: dict):
+def add_libs(doctest_namespace: dict, tkedro: TestKedro):
     """Add libraries to doctest namespace."""
     doctest_namespace['pprint'] = pprint
+    doctest_namespace['kedro'] = tkedro

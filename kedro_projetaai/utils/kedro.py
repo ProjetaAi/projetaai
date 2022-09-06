@@ -16,15 +16,17 @@ def read_kedro_pyproject() -> dict:
         dict: The kedro section of the pyproject.toml file.
 
     Example:
-        >>> _ = fs.create_file('pyproject.toml', '[tool.kedro]\na=1')
+        >>> _ = fs.tmp_cwd()
+        >>> _ = fs.write('pyproject.toml', '[tool.kedro]\na=1')
         >>> read_kedro_pyproject()
         {'a': 1}
 
-        >>> _ = fs.create_file('pyproject.toml', '')
-        >>> read_kedro_pyproject()  # doctest: +ELLIPSIS
+        >>> _ = fs.write('pyproject.toml', '')
+        >>> read_kedro_pyproject()
         Traceback (most recent call last):
-        ...
+            ...
         KeyError: 'No "tool.kedro" section in "pyproject.toml"'
+
     """
     pyproject = readtoml(str(Path.cwd() / 'pyproject.toml'))
     try:
@@ -40,12 +42,13 @@ def get_catalog() -> DataCatalog:
         DataCatalog: The catalog from the project.
 
     Example:
-        >>> _ = fs.create_kedro_project()
-        >>> _ = fs.create_file(
+        >>> _ = kedro.new('proj')
+        >>> _ = kedro.fs.write(
         ...     'conf/base/catalog.yml',
         ...     'a:\n  type: pickle.PickleDataSet\n  filepath: a.pickle')
         >>> get_catalog()._data_sets  # doctest: +ELLIPSIS
         {...'a': <...PickleDataSet object at ...>...}
+        >>> kedro.stop()
     """
     pyproject = read_kedro_pyproject()
     with KedroSession.create(

@@ -13,10 +13,10 @@ class ScriptException(Exception):
     """Exception for script errors.
 
     Example:
-        >>> raise ScriptException('Script error') #doctest: +ELLIPSIS
+        >>> raise ScriptException('Script error')
         Traceback (most recent call last):
-        ...
-        model.ScriptException: Script error
+            ...
+        kedro_projetaai.framework.model.ScriptException: Script error
     """
 
     pass
@@ -34,11 +34,11 @@ def assert_script(condition: bool, message: str = 'Invalid request'):
         ScriptException: if the condition fails.
 
     Example:
-        >>> assert_script(True, 'Invalid request')  # doctest: +ELLIPSIS
-        >>> assert_script(False, 'Invalid request')  # doctest: +ELLIPSIS
+        >>> assert_script(True, 'Invalid request')
+        >>> assert_script(False, 'Invalid request')
         Traceback (most recent call last):
-        ...
-        model.ScriptException: Invalid request
+            ...
+        kedro_projetaai.framework.model.ScriptException: Invalid request
     """
     if not condition:
         raise ScriptException(message)
