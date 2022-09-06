@@ -6,7 +6,6 @@ CLI_MODULES = [
     'model',
     'pipeline',
     'credential',
-    'catalog',
     'datastore',
     'run',
     'new',
