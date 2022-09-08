@@ -1,10 +1,9 @@
 """Tests model module."""
 from pathlib import Path
 import pytest
-from kedro_projetaai.framework.model import (
+from kedro_projetaai.serving.model import (
+    Scorer,
     ScriptSpec,
-    _get_script,
-    generate_inference_func,
 )
 from kedro.io import DataCatalog
 from kedro.io import MemoryDataSet
@@ -43,8 +42,9 @@ def fn_script(tmp_path: Path) -> str:
 
 
 def test_get_script(fn_script: str):
-    """Tests if _get_script returns a ScriptSpec."""
-    mod = _get_script(fn_script)
+    """Tests if Scorer returns a ScriptSpec."""
+    scr = Scorer(fn_script, DataCatalog())
+    mod = scr.script
     assert isinstance(mod, ScriptSpec)
 
 
@@ -64,9 +64,9 @@ def fn_script_missing_init(tmp_path: Path) -> str:
 
 def test_protocol(fn_script_missing_init: str):
     """Tests if _get_script checks the protocol implementation."""
-    with pytest.raises(Exception) as e:
-        _get_script(fn_script_missing_init)
-        type(e) == AssertionError
+    with pytest.raises(AssertionError):
+        scr = Scorer(fn_script_missing_init, DataCatalog())
+        scr.script
 
 
 @pytest.fixture
@@ -88,8 +88,8 @@ def catalog_script(tmp_path: Path) -> str:
 def test_inference_fn(catalog_script: str):
     """Tests if generate_inference_func returns the correct function."""
     catalog = DataCatalog({'model': MemoryDataSet(lambda x: x + 10)})
-    fn = generate_inference_func(catalog_script, catalog)
-    assert fn(10) == (21, 200)
+    scr = Scorer(catalog_script, catalog)
+    assert scr(10) == (21, 200)
 
 
 @pytest.fixture
@@ -98,7 +98,7 @@ def catalog_assert_script(tmp_path: Path) -> str:
     return create_script(
         tmp_path / 'script.py',
         [
-            'from kedro_projetaai.framework.model import assert_script',
+            'from kedro_projetaai.serving.model import assert_script',
             'def init(catalog):',
             '   return catalog.load(\'model\')',
             'def prepare(data):',
@@ -113,8 +113,8 @@ def catalog_assert_script(tmp_path: Path) -> str:
 def test_inference_bad_request(catalog_assert_script: str):
     """Tests if assertion errors bad requests."""
     catalog = DataCatalog({'model': MemoryDataSet(lambda x: x + 10)})
-    fn = generate_inference_func(catalog_assert_script, catalog)
-    assert fn('10') == ('data must be int', 400)
+    scr = Scorer(catalog_assert_script, catalog)
+    assert scr('10') == ('data must be int', 400)
 
 
 @pytest.fixture
@@ -136,5 +136,5 @@ def internal_server_error_script(tmp_path: Path) -> str:
 def test_internal_server_error(internal_server_error_script: str):
     """Tests if internal server errors are handled."""
     catalog = DataCatalog({'model': MemoryDataSet(lambda x: x + 10)})
-    fn = generate_inference_func(internal_server_error_script, catalog)
-    assert fn(10) == ('division by zero', 500)
+    scr = Scorer(internal_server_error_script, catalog)
+    assert scr(10) == ('division by zero', 500)

@@ -2,6 +2,8 @@
 import os
 import shutil
 import tomli
+from flatten_dict import flatten, unflatten
+import yaml
 
 
 def readtoml(filepath: str) -> dict:
@@ -60,3 +62,70 @@ def move_files(source: str, destination: str):
             shutil.rmtree(dstfile)
         shutil.move(os.path.join(source, file), destination)
     shutil.rmtree(source)
+
+
+def readyml(filepath: str) -> dict:
+    """Reads a `.yml` file as a dict.
+
+    Args:
+        filepath (str)
+
+    Returns:
+        dict
+
+    Example:
+        >>> path = fs.write('test.yml', 'a: 1')
+        >>> readyml(path)
+        {'a': 1}
+    """
+    with open(filepath, 'r') as f:
+        return yaml.load(f, Loader=yaml.FullLoader)
+
+
+def writeyml(filepath: str, data: dict):
+    """Writes a dict to a `.yml` file.
+
+    Args:
+        filepath (str)
+        data (dict)
+
+    Example:
+        >>> path = fs.write('test.yml', 'a: 1')
+        >>> writeyml(path, {'b': 2})
+        >>> fs.cat(path)
+        b: 2
+        <BLANKLINE>
+    """
+    with open(filepath, 'w') as f:
+        yaml.dump(data, f)
+
+
+def updateyml(filepath: str, data: dict):
+    """Update a yml file with new data recursively.
+
+    Args:
+        filepath (str): Path to yml file
+        data (dict): Data to update yml file with
+
+    Example:
+        >>> path = fs.write('test.yml', 'a: 1')
+        >>> updateyml(path, {'b': 2})
+        >>> fs.cat(path)
+        a: 1
+        b: 2
+        <BLANKLINE>
+
+        >>> writeyml(path, {'a': {'b': 1}})
+        >>> updateyml(path, {'a': {'c': 2}})
+        >>> fs.cat(path)
+        a:
+          b: 1
+          c: 2
+        <BLANKLINE>
+    """
+    existing_data = readyml(filepath)
+    existing_data = flatten(existing_data)
+    data = flatten(data)
+    existing_data.update(data)
+    existing_data = unflatten(existing_data)
+    writeyml(filepath, existing_data)

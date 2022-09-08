@@ -17,9 +17,9 @@ def serve_local(port: int, script: str, debug: bool):
     from flask import Flask, request
     from flask_cors import CORS
     from kedro_projetaai.cli.run import read_kedro_pyproject
-    from kedro_projetaai.framework.model import (
+    from kedro_projetaai.serving.model import (
         ValidResponses,
-        generate_inference_func,
+        Scorer
     )
     from kedro_projetaai.utils.kedro import get_catalog
 
@@ -27,7 +27,7 @@ def serve_local(port: int, script: str, debug: bool):
     app = Flask(name)
     CORS(app)
 
-    fn = generate_inference_func(script, get_catalog())
+    fn = Scorer(script, get_catalog())
 
     @app.post('/')
     def inference() -> Tuple[ValidResponses, int]:
