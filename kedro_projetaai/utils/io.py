@@ -2,8 +2,9 @@
 import os
 import shutil
 import tomli
-from flatten_dict import flatten, unflatten
 import yaml
+
+from kedro_projetaai.utils.iterable import mergedicts
 
 
 def readtoml(filepath: str) -> dict:
@@ -101,7 +102,7 @@ def writeyml(filepath: str, data: dict):
 
 
 def updateyml(filepath: str, data: dict):
-    """Update a yml file with new data recursively.
+    """Updates a yml file with new data recursively.
 
     Args:
         filepath (str): Path to yml file
@@ -124,8 +125,32 @@ def updateyml(filepath: str, data: dict):
         <BLANKLINE>
     """
     existing_data = readyml(filepath)
-    existing_data = flatten(existing_data)
-    data = flatten(data)
-    existing_data.update(data)
-    existing_data = unflatten(existing_data)
-    writeyml(filepath, existing_data)
+    merged = mergedicts(existing_data, data)
+    writeyml(filepath, merged)
+
+
+def upwriteyml(filepath: str, data: dict):
+    """Updates or creates a yml file with new data recursively.
+
+    Args:
+        filepath (str): Path to yml file
+        data (dict): Data to update yml file with
+
+    Example:
+        >>> path = fs.write('test.yml', 'a: 1')
+        >>> upwriteyml(path, {'b': 2})
+        >>> fs.cat(path)
+        a: 1
+        b: 2
+        <BLANKLINE>
+
+        >>> _ = fs.rm('test.yml')
+        >>> upwriteyml(path, {'b': 2})
+        >>> fs.cat(path)
+        b: 2
+        <BLANKLINE>
+    """
+    if os.path.isfile(filepath):
+        updateyml(filepath, data)
+    else:
+        writeyml(filepath, data)
