@@ -2,6 +2,7 @@
 
 from functools import reduce
 from typing import Dict, List
+from flatten_dict import flatten, unflatten
 
 from kedro_projetaai.utils.typing import T
 
@@ -64,3 +65,22 @@ def get_nested(dictionary: Dict[str, T], key: str) -> T:
         3
     """
     return reduce(lambda d, k: d[k], key.split("."), dictionary)
+
+
+def mergedicts(a: dict, b: dict) -> dict:
+    """Merges two dictionaries recursively.
+
+    Args:
+        a (dict)
+        b (dict)
+
+    Returns:
+        dict
+
+    Example:
+        >>> mergedicts({'a': {'b': 2}}, {'a': {'c': 4}})
+        {'a': {'b': 2, 'c': 4}}
+    """
+    fa = flatten(a)
+    fb = flatten(b)
+    return unflatten({**fa, **fb})
