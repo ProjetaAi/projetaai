@@ -1,3 +1,4 @@
+"""Tests if the code version is the same as the pyproject version."""
 from kedro_projetaai import __version__
 import tomli
 from pathlib import Path
