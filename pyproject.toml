@@ -1,6 +1,56 @@
-[build-system]
-build-backend = "setuptools.build_meta"
-requires = ["setuptools>=45.0", "wheel"]
+[tool.poetry]
+name = "kedro-projetaai"
+version = "0.1.0b0"
+description = "Kedro plugin that adds interfaces for production"
+authors = ["Ipiranga"]
+license = "Apache"
+readme = "README.md"
+packages = [{include = "kedro_projetaai"}]
+
+[tool.poetry.dependencies]
+python = ">=3.9,<3.10"
+kedro = "^0.18.2"
+cookiecutter = "^2.1.1"
+click = "^8.1.3"
+tomli = "^2.0.1"
+Flask = "^2.2.2"
+Flask-Cors = "^3.0.10"
+waitress = "^2.1.2"
+typing-extensions = "^4.3.0"
+attr = "^0.3.2"
+GitPython = "^3.1.27"
+flatten-dict = "^0.4.2"
+pydantic = "^1.10.2"
+
+[tool.poetry.group.dev.dependencies]
+yapf = "^0.32.0"
+pre-commit = "^2.20.0"
+
+[tool.poetry.group.test.dependencies]
+pytest = "^7.1.3"
+pytest-cov = "^3.0.0"
+pytest-mock = "^3.8.2"
+pytest-tmpfs = "^0.1.4"
+kedro-pytest = "^0.1.3"
+flake8 = "^5.0.4"
+flake8-docstrings = "^1.6.0"
+flake8-annotations = "^2.9.1"
+
+[tool.poetry.group.docs.dependencies]
+optional = true
+sphinx-copybutton = "^0.5.0"
+sphinx-autodoc-typehints = "^1.19.2"
+sphinx-autoapi = "^1.9.0"
+Sphinx = "^5.1.1"
+
+[tool.poetry.plugins."kedro.project_commands"]
+projetaai = "kedro_projetaai.plugin:cli"
+[tool.poetry.plugins."kedro.hooks"]
+projetaai-overrides = "kedro_projetaai.plugin:overrides"
+[tool.poetry.plugins."kedro.starters"]
+projetaai = "kedro_projetaai.starters:project_starters"
+[tool.poetry.plugins."projetaai.cli"]
+local = "kedro_projetaai.cli.local:LocalCLI"
 
 [tool.pytest.ini_options]
 addopts = """
@@ -29,3 +79,7 @@ dedent_closing_brackets = true
 split_arguments_when_comma_terminated = true
 allow_split_before_dict_value = false
 split_before_arithmetic_operator = true
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
