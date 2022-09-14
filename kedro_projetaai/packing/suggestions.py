@@ -19,13 +19,22 @@ def _parse_branch_name(branch: str) -> str:
         return ''
 
 
-def _get_experiment_from_git() -> str:
-    # Gets the current experiment from the git branch
+def get_branch_name() -> str:
+    """Gets the current branch name.
+
+    Returns:
+        str: The branch name.
+    """
     try:
         r = Repo()
     except InvalidGitRepositoryError:
         return ''
-    branch = r.active_branch.name
+    return r.active_branch.name
+
+
+def _get_experiment_from_git() -> str:
+    # Gets the current experiment from the git branch
+    branch = get_branch_name()
     return _parse_branch_name(branch)
 
 
