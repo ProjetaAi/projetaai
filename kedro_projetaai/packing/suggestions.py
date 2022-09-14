@@ -10,6 +10,15 @@ def _validate_name(name: str) -> bool:
          'and underscores only.')
 
 
+def _parse_branch_name(branch: str) -> str:
+    # Parses the branch name
+    if branch.startswith('experiment/'):
+        branch = branch.split('experiment/')[1]
+        return branch
+    else:
+        return ''
+
+
 def _get_experiment_from_git() -> str:
     # Gets the current experiment from the git branch
     try:
@@ -17,13 +26,14 @@ def _get_experiment_from_git() -> str:
     except InvalidGitRepositoryError:
         return ''
     branch = r.active_branch.name
-    if branch.startswith('experiment/'):
-        return branch.split('experiment/')[1]
-    else:
-        return ''
+    return _parse_branch_name(branch)
 
 
-def get_experiment_name(project: str, experiment: str = None) -> str:
+def get_experiment_name(
+    project: str,
+    experiment: str = None,
+    branch: str = None
+) -> str:
     """Gets a suggested experiment name from the current git branch.
 
     If the experiment name is not provided, it is obtained from the current
@@ -34,12 +44,19 @@ def get_experiment_name(project: str, experiment: str = None) -> str:
     Args:
         project (str): The project name.
         experiment (str): The experiment name. Defaults to None.
+        branch (str): The branch name. This argument is not required, it is
+            only used as a replacement for the automatic branch inference.
+            This is useful in environments where git branches are detached
+            or not clear for GitPython to read. Defaults to None.
 
     Returns:
         str: The experiment name.
     """
     if experiment is None:
-        experiment = _get_experiment_from_git()
+        if branch is None:
+            experiment = _get_experiment_from_git()
+        else:
+            experiment = _parse_branch_name(branch)
 
     if experiment:
         experiment = f'{project}_{experiment}'
