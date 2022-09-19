@@ -1,0 +1,21 @@
+name: Release
+on:
+  push:
+    branches:
+    - working
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      - uses: actions/checkout@master
+        with:
+          fetch-depth: 0
+      - name: Installing dependencies
+        run: pip install poetry
+      - name: Generating wheel
+        run: poetry build
+      - name: Uploading to pypy
+        run: poetry publish --username nickolasrm --password "${{ secrets.PYPI_PASSWORD }}"
