@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kedro-projetaai"
-version = "0.1.0b0"
+version = "0.1.0-b0"
 description = "Kedro plugin that adds interfaces for production"
 authors = ["Ipiranga"]
 license = "Apache"
