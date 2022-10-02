@@ -1,7 +1,5 @@
 """Utils for iterable manipulation."""
-
-from functools import reduce
-from typing import Dict, List
+from typing import Any, Dict, List, Union
 from flatten_dict import flatten, unflatten
 
 from kedro_projetaai.utils.typing import T
@@ -50,7 +48,7 @@ def optionaltolist(val: T) -> List[T]:
         return tolist(val)
 
 
-def get_nested(dictionary: Dict[str, T], key: str) -> T:
+def get_nested(dictionary: Dict[str, T], key: str) -> Any:
     """Return the value of a nested key in a dictionary.
 
     Args:
@@ -58,13 +56,19 @@ def get_nested(dictionary: Dict[str, T], key: str) -> T:
         key (str)
 
     Returns:
-        T
+        Any
 
     Example:
         >>> get_nested({'a': {'b': {'c': 3}}}, 'a.b.c')
         3
     """
-    return reduce(lambda d, k: d[k], key.split("."), dictionary)
+    ret: Union[Dict[str, Any], Any] = dictionary
+    for k in key.split("."):
+        if isinstance(ret, dict):
+            ret = ret[k]
+        else:
+            raise KeyError(f"the key {key} doesn't exist")
+    return ret
 
 
 def mergedicts(a: dict, b: dict) -> dict:

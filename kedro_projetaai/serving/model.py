@@ -32,7 +32,7 @@ class ScriptException(Exception):
     pass
 
 
-def assert_script(condition: bool, message: str = 'Invalid request'):
+def assert_script(condition: bool, message: str = "Invalid request"):
     """Asserts a condition and raises a ScriptException if it fails.
 
     Args:
@@ -80,7 +80,7 @@ class ScriptSpec(Protocol):
 
     payload: Optional[BaseModel]
 
-    def init(catalog: DataCatalog) -> Any:
+    def init(self, catalog: DataCatalog) -> Any:
         """Obtains any necessary resources for the prediction.
 
         Args:
@@ -91,7 +91,7 @@ class ScriptSpec(Protocol):
         """
         ...  # pragma: no cover
 
-    def prepare(data: Union[BaseModel, Any]) -> Any:
+    def prepare(self, data: Union[BaseModel, Any]) -> Any:
         """Prepares the request data for prediction.
 
         Args:
@@ -102,7 +102,7 @@ class ScriptSpec(Protocol):
         """
         ...  # pragma: no cover
 
-    def predict(model: Any, data: Any) -> ValidResponses:
+    def predict(self, model: Any, data: Any) -> ValidResponses:
         """Makes a prediction of a given request.
 
         Args:
@@ -115,7 +115,7 @@ class ScriptSpec(Protocol):
         ...  # pragma: no cover
 
 
-class Scorer(Callable):
+class Scorer:
     """Scores a model given an inference script.
 
     Attributes:
@@ -149,21 +149,26 @@ class Scorer(Callable):
             ScriptSpec: script module.
         """
         if not self._script:
-            if 'script' in sys.modules:
-                del sys.modules['script']
+            if "script" in sys.modules:
+                del sys.modules["script"]
 
             mod = importlib.machinery.SourceFileLoader(
                 "script",
                 self.path,
             ).load_module()
 
-            hasattr(mod, 'payload') or setattr(mod, 'payload', Any)
+            if not hasattr(mod, "payload"):
+                setattr(mod, "payload", Any)
 
-            assert isinstance(mod, ScriptSpec),\
-                ('Script doesn\'t implement all the following functions:\n'
-                 + '\n'.join([str(inspect.signature(getattr(ScriptSpec, fn)))
-                              for fn in dir(ScriptSpec)
-                              if not fn.startswith('_')]))
+            assert isinstance(
+                mod, ScriptSpec
+            ), "Script doesn't implement all the following functions:\n" + "\n".join(
+                [
+                    str(inspect.signature(getattr(ScriptSpec, fn)))
+                    for fn in dir(ScriptSpec)
+                    if not fn.startswith("_")
+                ]
+            )
             self._script = mod
 
         return self._script
@@ -236,10 +241,10 @@ class Scorer(Callable):
         """
         uuid = self._request_id
         try:
-            self.logger.info(f'[{uuid}] Request received')
+            self.logger.info(f"[{uuid}] Request received")
             data = self.prepare(body)
             result = self.predict(self.model, data)
-            self.logger.info(f'[{uuid}] Request processed')
+            self.logger.info(f"[{uuid}] Request processed")
             return result, 200  # OK
         except ScriptException as e:
             self.logger.info(f'[{uuid}] Invalid request: "{str(e)}"')

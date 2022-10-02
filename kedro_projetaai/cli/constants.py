@@ -3,24 +3,25 @@ import sys
 
 
 CLI_MODULES = [
-    'model',
-    'pipeline',
-    'credential',
-    'datastore',
-    'run',
-    'new',
-    'starter',
+    "model",
+    "pipeline",
+    "credential",
+    "datastore",
+    "run",
+    "new",
+    "starter",
 ]
 
 CLI_MODULES_HELP = {
-    'credential': 'Credentials YML management.',
-    'datastore': 'Storage pointers management.',
+    "credential": "Credentials YML management.",
+    "datastore": "Storage pointers management.",
 }
 
 ENTRY_POINTS = {
-    'CLI': 'projetaai.cli',
-    'CI': 'projetaai.starters.ci',
+    "CLI": "projetaai.cli",
+    "CI": "projetaai.ci",
 }
 
-PYTHON_VERSION = (f'{sys.version_info.major}.{sys.version_info.minor}.'
-                  f'{sys.version_info.micro}')
+PYTHON_VERSION = (
+    f"{sys.version_info.major}.{sys.version_info.minor}." f"{sys.version_info.micro}"
+)

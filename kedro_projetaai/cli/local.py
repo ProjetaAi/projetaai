@@ -2,34 +2,29 @@
 import click
 from click import Command
 from kedro_projetaai.cli import ProjetaAiCLIPlugin
-from kedro.framework.cli.project import run
-from kedro.framework.cli.pipeline import create_pipeline
 from typing import Tuple
 
 
 @click.command()
-@click.option('--port', default=3000, type=int, help='Port to bind to.')
-@click.option('--script', required=True, help='Path to the script.')
-@click.option('--debug', default=False, is_flag=True, help='Debug mode.')
+@click.option("--port", default=3000, type=int, help="Port to bind to.")
+@click.option("--script", required=True, help="Path to the script.")
+@click.option("--debug", default=False, is_flag=True, help="Debug mode.")
 def serve_local(port: int, script: str, debug: bool):
     """Creates a local inference server serving on post "/"."""
     import waitress
     from flask import Flask, request
     from flask_cors import CORS
     from kedro_projetaai.cli.run import read_kedro_pyproject
-    from kedro_projetaai.serving.model import (
-        ValidResponses,
-        Scorer
-    )
+    from kedro_projetaai.serving.model import ValidResponses, Scorer
     from kedro_projetaai.utils.kedro import get_catalog
 
-    name = read_kedro_pyproject()['package_name']
+    name = read_kedro_pyproject()["package_name"]
     app = Flask(name)
     CORS(app)
 
     fn = Scorer(script, get_catalog())
 
-    @app.post('/')
+    @app.post("/")
     def inference() -> Tuple[ValidResponses, int]:
         """Inference endpoint."""
         body = request.json
@@ -45,22 +40,9 @@ class LocalCLI(ProjetaAiCLIPlugin):
     """ProjetaAi CLI plugin for local environment management."""
 
     @property
-    def pipeline_create(self) -> Command:
-        """Pipeline create command.
-
-        Returns:
-            Command
-        """
-        return create_pipeline
-
-    @property
-    def run(self) -> Command:
-        """Kedro run command.
-
-        Returns:
-            Command
-        """
-        return run
+    def help(self) -> str:
+        """Local help."""
+        return "Local environment extensions"
 
     @property
     def model_deploy(self) -> Command:

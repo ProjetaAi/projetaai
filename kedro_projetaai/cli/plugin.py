@@ -1,11 +1,11 @@
 """Package containing CLI plugin creation tools."""
-from typing import Dict, Iterator, List, Union
+from typing import Iterator, List, Optional, Union, cast
 from click import Command, Group
 import click
 from kedro_projetaai.utils.iterable import optionaltolist
 from kedro_projetaai.cli.constants import CLI_MODULES
 from kedro.framework.cli.starters import KedroStarterSpec
-from attr import define
+from attrs import define
 
 
 class ProjetaAiCLIPlugin:
@@ -13,7 +13,37 @@ class ProjetaAiCLIPlugin:
 
     This class contains predefined properties for each subgroup of the CLI.
     By defining them, you may return a click command or a list of commands
-    to be added to the property subgroup.
+    to be added to the property subgroup. For example, if you wish to add
+    the command ``kedro <plugin> model deploy``, just overwrite the ``model_deploy``
+    property.
+
+    If you return only one command, ProjetaAi will use the group as the command
+    path. While if you return more than one command, ProjetaAi will nest them in its
+    respective group. The same behaviour happens if you create subgroups.
+    See the example tables below:
+
+    | Method          | CLI command                       |
+    | --------------- | --------------------------------- |
+    | model_deploy.A  | kedro <plugin> model deploy       |
+
+    | Method          | CLI command                       |
+    | --------------- | --------------------------------- |
+    | model_deploy.A  | kedro <plugin> model deploy A     |
+    | model_deploy.B  | kedro <plugin> model deploy B     |
+
+    | Method          | CLI command                       |
+    | --------------- | --------------------------------- |
+    | model_bar.A     | kedro <plugin> model bar A        |
+    | model_bar_zee.B | kedro <plugin> model bar zee      |
+
+    Note:
+        Every method docstring is used for documenting the group help message. Thus, for
+        creating more descriptive menus, don't forget to write docstrings for the
+        intermediate groups.
+
+    Note:
+        You can find all CLI subgroups under
+        ``kedro_projetaai.cli.constants.CLI_MODULES``.
 
     Example:
         >>> import click
@@ -44,174 +74,134 @@ class ProjetaAiCLIPlugin:
     """
 
     @property
-    def credential(self) -> Union[Command, List[Command]]:
-        """Commands for credential management.
+    def name(self) -> Optional[str]:
+        """CLI plugin name. If not specified, uses the ``importlib.metadata`` name."""
+        pass
 
-        Returns:
-            List[Command]: List of credential commands.
-        """
+    @property
+    def help(self) -> Optional[str]:
+        """Help message this CLI plugin group."""
+        pass
+
+    @property
+    def credential(self) -> Union[Command, List[Command]]:
+        """Commands for credential management."""
         pass
 
     @property
     def credential_create(self) -> Union[Command, List[Command]]:
-        """Commands for credential creation.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for creating credentials."""
         pass
 
     @property
     def credential_delete(self) -> Union[Command, List[Command]]:
-        """Commands for credential deletion.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for deleting credentials."""
         pass
 
     @property
     def model(self) -> Union[Command, List[Command]]:
-        """Commands for model management.
-
-        Returns:
-            List[Command]: List of model commands.
-        """
+        """Commands for model management."""
         pass
 
     @property
     def model_register(self) -> Union[Command, List[Command]]:
-        """Commands for registering models.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for registering models."""
         pass
 
     @property
     def model_deploy(self) -> Union[Command, List[Command]]:
-        """Commands for creating an inference endpoint.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for creating an inference services."""
         pass
 
     @property
     def pipeline(self) -> Union[Command, List[Command]]:
-        """Commands for pipeline management.
-
-        Returns:
-            List[Command]: List of pipeline commands.
-        """
+        """Commands for pipeline management."""
         pass
 
     @property
     def pipeline_create(self) -> Union[Command, List[Command]]:
-        """Commands for creating a new pipeline.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for creating new pipelines."""
         pass
 
     @property
     def pipeline_schedule(self) -> Union[Command, List[Command]]:
-        """Commands for scheduling a pipeline.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for scheduling pipelines."""
         pass
 
     @property
     def run(self) -> Union[Command, List[Command]]:
-        """Commands for running the project.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for running the project."""
         pass
 
     @property
     def datastore(self) -> Union[Command, List[Command]]:
-        """Commands for datastore management.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
-        pass
-
-    @property
-    def datastore_create(self) -> Union[Command, List[Command]]:
-        """Commands for datastore creation.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for datastore management."""
         pass
 
     @property
     def catalog(self) -> Union[Command, List[Command]]:
-        """Commands for catalog management.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
+        """Commands for catalog management."""
         pass
 
-    @property
-    def catalog_assign_list(self) -> Union[Command, List[Command]]:
-        """Commands that return a list of credential entries by dict path.
-
-        Returns:
-            Union[Command, List[Command]]: Command or list of commands.
-        """
-        pass
-
-    def _get_commands(
-        self,
-        group: Group,
-        commands: List[Union[Command, Group]],
-        parts: Iterator[str],
-        part: str,
-    ) -> Group:
-        if group is None or group.name != part:
-            return self._get_commands(click.Group(part), commands, parts, part)
-        elif group.name == part:
-            part = next(parts, None)
-            if part is None:
-                for command in commands:
-                    group.add_command(command)
-            else:
-                group.add_command(
-                    self._get_commands(
-                        group.commands.get(part, None), commands, parts, part
+    def _get_command_groups(self) -> List[Group]:
+        def recursion(
+            group: Optional[Group],
+            commands: List[Union[Command, Group]],
+            parts: Iterator[str],
+            part: Optional[str],
+        ) -> Group:
+            if group is None or group.name != part:
+                return recursion(click.Group(part), commands, parts, part)
+            elif group.name == part:
+                part = next(parts, None)
+                if part is None:
+                    for command in commands:
+                        group.add_command(command)
+                else:
+                    group.add_command(
+                        recursion(
+                            cast(Optional[Group], group.commands.get(part, None)),
+                            commands,
+                            parts,
+                            part,
+                        )
                     )
-                )
             return group
 
-    def get_commands(self) -> Dict[str, List[Union[Command, Group]]]:
+        groups = []
+        for group_name in CLI_MODULES:
+            group = Group(group_name)
+            for method_name in dir(self):
+                if method_name.startswith(group_name):
+                    commands = optionaltolist(getattr(self, method_name))
+                    if commands:
+                        method_parts = iter(method_name.split("_"))
+                        recursion(group, commands, method_parts, next(method_parts))
+
+            if group.commands:
+                groups.append(group)
+
+        return groups
+
+    def _copy_docstrings(self, group: Group):
+        def recursion(method: str, group: Group):
+            for subname, subgroup in group.commands.items():
+                if isinstance(subgroup, Group):
+                    recursion(f"{method}_{subname}", subgroup)
+            if hasattr(self, method):
+                group.help = getattr(self.__class__, method).__doc__
+
+        recursion(str(group.name), group)
+
+    def get_commands(self) -> List[Group]:
         """Return all commands of this plugin.
 
         Returns:
-            List[Command]: List of commands.
+            List[Group]: List of commands.
         """
-        groups = {}
-        for group_name in CLI_MODULES:
-            group = Group(group_name)
-            for method in dir(self):
-                if method.startswith(group_name):
-                    commands = optionaltolist(getattr(self, method))
-                    if commands:
-                        method_parts = iter(method.split('_'))
-                        self._get_commands(
-                            group, commands, method_parts, next(method_parts)
-                        )
-
-            if group.commands:
-                groups[group_name] = list(group.commands.values())
-
+        groups = self._get_command_groups()
+        for group in groups:
+            self._copy_docstrings(group)
         return groups
 
 
