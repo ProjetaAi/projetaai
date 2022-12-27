@@ -8,5 +8,10 @@ project_starters = [
         alias='projetaai',
         template_path=STARTERS_REPO,
         directory='for_projetaai/project/projetaai',
+    ),
+    KedroStarterSpec(
+        alias='projetaai_mp',
+        template_path=STARTERS_REPO,
+        directory='for_projetaai/project/projetaai_mp',
     )
 ]
