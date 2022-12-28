@@ -13,5 +13,10 @@ project_starters = [
         alias='projetaai_mp',
         template_path=STARTERS_REPO,
         directory='for_projetaai/project/projetaai_mp',
+    ),
+    KedroStarterSpec(
+        alias='projetaai_adbc',
+        template_path=STARTERS_REPO,
+        directory='for_projetaai/project/projetaai_adbc',
     )
 ]
