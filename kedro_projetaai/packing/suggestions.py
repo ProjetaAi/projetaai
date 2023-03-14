@@ -5,18 +5,19 @@ from git import Repo, InvalidGitRepositoryError
 
 def _validate_name(name: str) -> bool:
     # Validates a name
-    assert re.match(r'[A-Za-z_]+', name).group(0) == name and len(name) > 3,\
-        ('The name must be at least 3 characters long and only contain letters'
-         'and underscores only.')
+    assert re.match(r"[A-Za-z_]+", name).group(0) == name and len(name) > 3, (
+        "The name must be at least 3 characters long and only contain letters"
+        "and underscores only."
+    )
 
 
 def _parse_branch_name(branch: str) -> str:
     # Parses the branch name
-    if branch.startswith('experiment/'):
-        branch = branch.split('experiment/')[1]
+    if branch.startswith("experiment/"):
+        branch = branch.split("experiment/")[1]
         return branch
     else:
-        return ''
+        return ""
 
 
 def get_branch_name() -> str:
@@ -28,7 +29,7 @@ def get_branch_name() -> str:
     try:
         r = Repo()
     except InvalidGitRepositoryError:
-        return ''
+        return ""
     return r.active_branch.name
 
 
@@ -39,9 +40,7 @@ def _get_experiment_from_git() -> str:
 
 
 def get_experiment_name(
-    project: str,
-    experiment: str = None,
-    branch: str = None
+    project: str, experiment: str = None, branch: str = None
 ) -> str:
     """Gets a suggested experiment name from the current git branch.
 
@@ -68,7 +67,7 @@ def get_experiment_name(
             experiment = _parse_branch_name(branch)
 
     if experiment:
-        experiment = f'{project}_{experiment}'
+        experiment = f"{project}_{experiment}"
     else:
         experiment = project
 
@@ -78,20 +77,18 @@ def get_experiment_name(
 
 def _parse_pipeline_name(pipeline: str) -> tuple:
     # Parses the pipeline name
-    if pipeline == '__default__':
-        pipeline = 'default'
+    if pipeline == "__default__":
+        pipeline = "default"
     return pipeline
 
 
 def _extract_raw_experiment(project: str, experiment: str) -> str:
     # Extracts the raw experiment name from the pipeline name
-    return re.sub(f'^{project}_?', '', experiment)
+    return re.sub(f"^{project}_?", "", experiment)
 
 
 def get_pipeline_name(
-    project: str,
-    pipeline: str = '__default__',
-    experiment: str = None
+    project: str, pipeline: str = "__default__", experiment: str = None
 ) -> str:
     """Gets a suggested pipeline.
 
@@ -109,12 +106,12 @@ def get_pipeline_name(
         str: '<project>_<pipeline>_<experiment>' or '<project>_<pipeline>'.
     """
     pipeline = _parse_pipeline_name(pipeline)
-    pipeline = f'_{pipeline}'
+    pipeline = f"_{pipeline}"
 
     experiment = _extract_raw_experiment(project, experiment)
     if experiment:
-        experiment = f'_{experiment}'
+        experiment = f"_{experiment}"
 
-    pipeline = f'{project}{pipeline}{experiment}'
+    pipeline = f"{project}{pipeline}{experiment}"
     _validate_name(pipeline)
     return pipeline
