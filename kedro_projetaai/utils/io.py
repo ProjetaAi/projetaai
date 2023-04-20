@@ -21,7 +21,7 @@ def readtoml(filepath: str) -> dict:
         >>> readtoml(path)
         {'a': {'b': 1}}
     """
-    with open(filepath, 'rb') as f:
+    with open(filepath, "rb") as f:
         return tomli.load(f)
 
 
@@ -79,7 +79,7 @@ def readyml(filepath: str) -> dict:
         >>> readyml(path)
         {'a': 1}
     """
-    with open(filepath, 'r') as f:
+    with open(filepath, "r") as f:
         return yaml.load(f, Loader=yaml.FullLoader)
 
 
@@ -97,7 +97,7 @@ def writeyml(filepath: str, data: dict):
         b: 2
         <BLANKLINE>
     """
-    with open(filepath, 'w') as f:
+    with open(filepath, "w") as f:
         yaml.dump(data, f)
 
 
