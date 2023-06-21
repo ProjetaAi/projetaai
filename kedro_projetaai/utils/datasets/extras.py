@@ -68,11 +68,11 @@ class BaseDataset:
         self.default_formating()
 
     def default_formating(self):
-        
+
         """
         default formating for the class
         """
-        
+
         from fsspec.utils import infer_storage_options
         self.check_and_set_path_filepath()
         self.generate_and_check_dtypes_dict()
@@ -250,7 +250,7 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
 
 
         if date_formats:
-            first_day = self._generate_first_day(self.version_config.get("starting_weekday")) # type: ignore
+            first_day = self._generate_first_day() # type: ignore
             formatted_dates = {key: first_day.strftime(fmt) for key, fmt in date_formats.items()}
             formatted_filepath = formatted_filepath.format(**formatted_dates)
         if "{" in formatted_filepath and "}" in formatted_filepath:
