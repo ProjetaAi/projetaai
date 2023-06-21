@@ -20,7 +20,7 @@ CLI_MODULES_HELP = {
 ENTRY_POINTS = {
     "CLI": "projetaai.cli",
     "CI": "projetaai.ci",
-    "PROJECT": "projetaai.projetaai_lab"
+    "PROJECT": "projetaai.projetaai_lab",
 }
 
 PYTHON_VERSION = (

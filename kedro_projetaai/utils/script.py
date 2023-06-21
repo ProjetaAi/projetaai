@@ -40,11 +40,11 @@ class Step(Callable):
     """
 
     __MARKERS: ClassVar[Dict[str, str]] = {
-        'done': '\N{check mark}',
-        'working': '\N{clock face three oclock}',
-        'error': '\N{cross mark}',
-        'info': '\N{circled information source}',
-        'blank': ''
+        "done": "\N{check mark}",
+        "working": "\N{clock face three oclock}",
+        "error": "\N{cross mark}",
+        "info": "\N{circled information source}",
+        "blank": "",
     }
 
     @classmethod
@@ -61,11 +61,10 @@ class Step(Callable):
         return cls(**{f: kwargs[f] if f in kwargs else None for f in fieldset})
 
     def log(
-        self, marker: Literal['done', 'working', 'error', 'blank', 'info'],
-        message: str
+        self, marker: Literal["done", "working", "error", "blank", "info"], message: str
     ):
         """Logs a message with a marker."""
-        message = f'{self.__MARKERS[marker]} {message}'
+        message = f"{self.__MARKERS[marker]} {message}"
         print(message)
 
     def log_ignored(self):
@@ -82,7 +81,7 @@ class Step(Callable):
             <BLANKLINE>
             {}
         """
-        self.log('info', f'{self.formatted_class_name} ignored')
+        self.log("info", f"{self.formatted_class_name} ignored")
 
     @property
     def formatted_class_name(self) -> str:
@@ -91,9 +90,7 @@ class Step(Callable):
         Returns:
             str: The class name in snake_case.
         """
-        return ' '.join(
-            to_snake_case(self.__class__.__name__).split('_')
-        )
+        return " ".join(to_snake_case(self.__class__.__name__).split("_"))
 
     @abstractmethod
     def run(self) -> Union[None, dict]:
@@ -109,14 +106,14 @@ class Step(Callable):
         Returns:
             dict: The result of the step.
         """
-        self.log('working', f'running {self.formatted_class_name}')
+        self.log("working", f"running {self.formatted_class_name}")
         try:
             out = self.run() or {}
-            self.log('done', f'finished {self.formatted_class_name}')
+            self.log("done", f"finished {self.formatted_class_name}")
         except Exception as e:
-            self.log('error', f'{self.formatted_class_name} errored')
+            self.log("error", f"{self.formatted_class_name} errored")
             raise e
-        self.log('blank', '')
+        self.log("blank", "")
         return out
 
 

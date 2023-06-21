@@ -31,8 +31,7 @@ def override_get_credentials():
     """
     _kedro_get_credentials = data_catalog._get_credentials
 
-    def _get_credentials(credential_name: str,
-                         credentials: Dict[str, T]) -> T:
+    def _get_credentials(credential_name: str, credentials: Dict[str, T]) -> T:
         """Get the credential from the credentials dictionary.
 
         Args:

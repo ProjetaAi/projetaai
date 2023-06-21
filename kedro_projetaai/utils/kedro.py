@@ -28,9 +28,9 @@ def read_kedro_pyproject() -> dict:
         KeyError: 'No "tool.kedro" section in "pyproject.toml"'
 
     """
-    pyproject = readtoml(str(Path.cwd() / 'pyproject.toml'))
+    pyproject = readtoml(str(Path.cwd() / "pyproject.toml"))
     try:
-        return pyproject['tool']['kedro']
+        return pyproject["tool"]["kedro"]
     except KeyError:
         raise KeyError('No "tool.kedro" section in "pyproject.toml"')
 
@@ -52,6 +52,6 @@ def get_catalog() -> DataCatalog:
     """
     pyproject = read_kedro_pyproject()
     with KedroSession.create(
-        package_name=pyproject['package_name'], project_path=os.getcwd()
+        package_name=pyproject["package_name"], project_path=os.getcwd()
     ) as session:
         return session.load_context()._get_catalog()
