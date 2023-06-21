@@ -64,7 +64,7 @@ class BaseDataset:
         self.save_args = save_args
         self.load_args = load_args
         self.credentials = credentials
-        self._back_date = back_date
+        self._back_date = self.format_back_date(back_date)
         self.default_formating()
 
     def default_formating(self):
@@ -79,6 +79,19 @@ class BaseDataset:
         self.remove_account_url_from_path()
         self.get_version()
         self.protocol = infer_storage_options(self.path)["protocol"]
+
+    def format_back_date(self, back_date: Union[str, None]) -> Union[str, None]:
+
+        """
+        making sure that the functions here read
+        correctly the back_date format
+        kedro yml does not support "null" as a value
+        therefore we use '' to represent None
+        """
+
+        if back_date == '':
+            return None
+        return back_date
 
     def get_version(self):
 
