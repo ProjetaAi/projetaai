@@ -16,10 +16,17 @@ def extra_datasets():
     """
     add custom datasets to kedro"""
     click.echo('copying extras datasets to kedro catalog')
-    toml_file = toml.load('pyproject.toml')['tool']['kedro']['project_name']
+    project_name = toml.load('pyproject.toml')['tool']['kedro']['project_name']
     module_dir = os.path.dirname(extras.__file__)
     shutil.copytree(module_dir,
                     os.path.join(os.getcwd(),
-                                 f'src/{toml_file}/extras/datasets'),
+                                 f'src/{project_name}/extras/datasets'),
                     dirs_exist_ok=True)
+    line_to_add = f'from {project_name}.extras.datasets.extras import * # NOQA'
+    with open(os.path.join(os.getcwd(),
+                           f'src/{project_name}/__init__.py'), 'r+') as f:
+        lines = f.readlines()
+        if line_to_add not in (line.strip() for line in lines):
+            f.seek(0)
+            f.write(line_to_add + '\n' + ''.join(lines))
     click.echo('done copying extras datasets to kedro catalog')
