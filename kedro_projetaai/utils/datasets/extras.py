@@ -52,7 +52,7 @@ class BaseDataset:
 
     def __init__(self, load_args: dict, credentials: dict, save_args: dict=None,  # type: ignore
                   path: str = None, filepath: str = None,  # type: ignore
-                  version_config: dict=None, back_date=None) -> None:  # type: ignore
+                  version_config: dict={}, back_date=None) -> None:  # type: ignore
 
         """
         Inicialização da classe
@@ -101,6 +101,8 @@ class BaseDataset:
 
         if self.version_config:
             self.versioned = self.version_config.pop('versioned', None)
+        if (self.version_config is None) and (self.load_args.get('starting_weekday')):
+            self.version_config['starting_weekday'] = self.load_args.pop('starting_weekday', None)
         return
 
     def remove_account_url_from_path(self):
@@ -156,8 +158,8 @@ class BaseDataset:
 
     def _generate_first_day(self):
         today = pd.to_datetime('today') if self._back_date is None else pd.to_datetime(self._back_date, format='%Y-%m-%d')
-        if self.load_args.get('starting_weekday'):
-            days_difference = (today.weekday() - self.load_args['starting_weekday']) % 7
+        if self.version_config.get('starting_weekday'):
+            days_difference = (today.weekday() - self.version_config['starting_weekday']) % 7
         else:
             days_difference = 0
         last_specific_day = today - pd.Timedelta(days=days_difference)
@@ -175,7 +177,7 @@ class ReadParquet(ParquetDataSet, BaseDataset): #VendasDataSet
                  credentials: dict[str, str],
                  load_args: dict[str, Any] = {},
                  save_args: dict[str, Any] = None,  # type: ignore
-                 version: Version = None) -> None:
+                 version: Version = None) -> None:  # type: ignore
 
         """
         initialize the class
