@@ -20,6 +20,7 @@ from copy import deepcopy
 
 class BaseDataset:
 
+    """ base class for all datasets in projetaai """
     _df: pd.DataFrame = None # type: ignore
 
     @property
@@ -40,12 +41,22 @@ class BaseDataset:
 
     @property
     def _filesystem(self):
+
+        """
+        função do filesystem para ser usada na leitura
+        do lake e escrita no lake em outras funções.
+        """
+
         from fsspec import filesystem  # pylint: disable=import-outside-toplevel
         return filesystem(self.protocol, **self.credentials)
 
     def __init__(self, load_args: dict, credentials: dict, save_args: dict=None,  # type: ignore
                   path: str = None, filepath: str = None,  # type: ignore
-                  version_config: dict = None) -> None:  # type: ignore
+                  version_config: dict=None, back_date=None) -> None:  # type: ignore
+
+        """
+        Inicialização da classe
+        """
 
         self.path = path
         self.version_config = version_config
@@ -53,9 +64,15 @@ class BaseDataset:
         self.save_args = save_args
         self.load_args = load_args
         self.credentials = credentials
+        self._back_date = back_date
         self.default_formating()
 
     def default_formating(self):
+        
+        """
+        default formating for the class
+        """
+        
         from fsspec.utils import infer_storage_options
         self.check_and_set_path_filepath()
         self.generate_and_check_dtypes_dict()
@@ -64,11 +81,22 @@ class BaseDataset:
         self.protocol = infer_storage_options(self.path)["protocol"]
 
     def get_version(self):
+
+        """
+        verifica se o dataset é versionado e pega a versão
+        """
+
         if self.version_config:
             self.versioned = self.version_config.pop('versioned', None)
         return
 
     def remove_account_url_from_path(self):
+
+        """
+        had problems with fsspec and kedro
+        this fixes it
+        """
+
         account_name = self.credentials['account_name']
         account_url = f"{account_name}.dfs.core.windows.net/"
 
@@ -78,6 +106,11 @@ class BaseDataset:
         return
 
     def generate_and_check_dtypes_dict(self):
+
+        """
+        dtypes is a dict that will be used to cast the dataframe
+        """
+
         self.dtypes = (self.load_args.pop('dtypes')
                        if 'dtypes' in self.load_args.keys() else {})
         if not isinstance(self.dtypes, dict):
@@ -85,6 +118,12 @@ class BaseDataset:
         return
 
     def check_and_set_path_filepath(self):
+
+        """
+        defaults filepath and path to path
+        just for convenience
+        """
+
         if self.path and self.filepath:
             raise ValueError("path and filepath can't be used together")
         if self.filepath:
@@ -92,19 +131,42 @@ class BaseDataset:
         return
 
     def set_dtypes(self, df: pd.DataFrame) -> pd.DataFrame:
+
+        """
+        apply dtypes to dataframe
+        """
+
         if self.dtypes:
             return df.astype(self.dtypes)
         else:
             return df
 
+    def _generate_first_day(self):
+        today = pd.to_datetime('today') if self._back_date is None else pd.to_datetime(self._back_date, format='%Y-%m-%d')
+        if self.load_args.get('starting_weekday'):
+            days_difference = (today.weekday() - self.load_args['starting_weekday']) % 7
+        else:
+            days_difference = 0
+        last_specific_day = today - pd.Timedelta(days=days_difference)
+        return last_specific_day
+
 
 class ReadParquet(ParquetDataSet, BaseDataset): #VendasDataSet
+
+    """
+    to read kedro parquets with
+    a little bit more of convenience
+    """
 
     def __init__(self, filepath: str,
                  credentials: dict[str, str],
                  load_args: dict[str, Any] = {},
                  save_args: dict[str, Any] = None,  # type: ignore
                  version: Version = None) -> None:
+
+        """
+        initialize the class
+        """
 
         BaseDataset.__init__(self, filepath=filepath,
                              load_args=load_args,
@@ -116,6 +178,11 @@ class ReadParquet(ParquetDataSet, BaseDataset): #VendasDataSet
                          self.credentials)
 
     def _load(self) -> pd.DataFrame:
+
+        """
+        subscribe the load function
+        """
+
         self.df = super()._load()
         logging.info(f"Loaded {self.path}")
         return self.df
@@ -123,9 +190,8 @@ class ReadParquet(ParquetDataSet, BaseDataset): #VendasDataSet
 class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedDataset
 
     """
-    Essa classe adapta o AbstractVersionedDataSet para ler
-    o dado versionado no formado que já deixamos salvos, por exemplo
-    versionando sempre para o último domingo.
+    this class abstracts the "abstracrversioneddataset" from kedro
+    to extend it to the necessities of projetaai
     """
 
     def __init__(self, filepath: str, credentials: dict,
@@ -134,11 +200,16 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
                  version_config: dict[str, Any] = None, back_date=None, # type: ignore
                  save_args: dict[str, Any] = {}) -> None:
 
+        """
+        initialize the class
+        """
+
         BaseDataset.__init__(self, filepath=filepath,
-                        load_args=load_args,
-                        save_args=save_args,
-                        credentials=credentials,
-                        version_config=version_config)
+                             load_args=load_args,
+                             save_args=save_args,
+                             credentials=credentials,
+                             version_config=version_config,
+                             back_date=back_date)
 
         super().__init__(
             filepath=self.path, # type: ignore
@@ -146,19 +217,16 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
         )
         if back_date == '':
             back_date = None
-        self._back_date = back_date
         self._dataset_type, self._dataset_config = parse_dataset_definition(dataset)
 
-    def _generate_first_day(self, starting_weekday: int) -> pd.Timestamp:
-        today = pd.to_datetime('today') if self._back_date is None else pd.to_datetime(self._back_date, format='%Y-%m-%d')
-        if starting_weekday is None:
-            days_difference = 0
-        else:
-            days_difference = (today.weekday() - starting_weekday) % 7
-        last_specific_day = today - pd.Timedelta(days=days_difference)
-        return last_specific_day
+
 
     def get_existing_versions(self):
+
+        """
+        get existing versions of the dataset
+        """
+
         path, filename = self.path.split("/")
         name, file_extension = filename.split(".")
         glob_result = self._filesystem.glob(path)
@@ -167,6 +235,11 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
         return versions
 
     def _format_filepath_date(self) -> str:
+
+        """
+        format the dates in the provided path
+        """
+
         formatted_filepath = self.path
         date_formats = {}
 
@@ -196,7 +269,7 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
     def _save(self, data: Union[pd.DataFrame, dict]) -> None:
 
         """
-        salva o dado na estrutura de string que queremos
+        overwrite the save function
         """
 
         formatted_filepath = self._format_filepath_date()
@@ -225,6 +298,11 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
         return
 
     def _load(self):
+
+        """
+        overwrite the load function
+        """
+
         kwargs = {}
         kwargs['filepath'] = self._format_filepath_date()
         kwargs['credentials'] = deepcopy(self.credentials)
@@ -241,6 +319,12 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
 
 
 class FileReader(AbstractDataSet, BaseDataset):
+
+    """
+    abstract the "abstractdataset" from kedro
+    to read multiple files in a folder
+    """
+
     def __init__(self, path: str,
                  credentials: dict,
                  dataset: dict,
@@ -251,21 +335,32 @@ class FileReader(AbstractDataSet, BaseDataset):
 
         BaseDataset.__init__(self, path=path,
                              load_args=load_args,
-                             credentials=credentials)
+                             credentials=credentials,
+                             back_date=back_date)
 
-        self._back_date = back_date
         if self.path is None:
             raise ValueError("Must provide `path`")
         self._dataset_type, self._dataset_config = parse_dataset_definition(dataset)
         self._transform_load_config()
 
     def _validate_load_config(self) -> str:
+
+        """
+        validate necessary arguments
+        in load_args
+        """
+
         current_time_scale = self.load_args.get('time_scale', None)
         if current_time_scale is None:
             raise ValueError('time_scale must be provided in yml file')
         return current_time_scale
 
     def _transform_load_config(self):
+
+        """
+        transform the time_scale
+        """
+
         time_scale_map = {
             'D': 'days',
             'M': 'months',
@@ -276,12 +371,27 @@ class FileReader(AbstractDataSet, BaseDataset):
         return
 
     def _get_date_source(self):
+
+        """
+        defaults to path
+        for convenience
+        """
+
         if  '.' in self.path.split('/')[-1]:
             return 'filename'
         else:
             return 'path'
 
     def _get_date_string(self, path: str) -> pd.Timestamp:
+
+        """
+        checks the path for a date
+        supports the following formats:
+        folder/folder/yyyy/mm/dd/file.csv
+        or
+        folder/file_yyyy-MM-dd.csv
+        """
+
         date_source = self._get_date_source()#self.load_args.get('date_source', 'path')
 
         if date_source == 'path':
@@ -317,32 +427,45 @@ class FileReader(AbstractDataSet, BaseDataset):
     def _is_within_date_range(self, path: str,
                               first_day: pd.Timestamp,
                               last_day: pd.Timestamp):
+
+        """
+        checks if the date is within the date range
+        """
+
         date_str = self._get_date_string(path)
         return first_day >= date_str >= last_day
 
     def _filter(self, path_list: list[str]):
-        first_day = self._generate_first_day()
+
+        """
+        filter the path_list
+        with the given date range
+        """
+
+        first_day = self._generate_first_day().normalize()
         last_day = self._generate_last_day(first_day)
         path_list = [path for path in path_list if self._is_within_date_range(path, first_day, last_day)]
         if not path_list:
             raise ValueError('No files found in the given date range')
         return path_list
 
-    def _generate_first_day(self):
-        today = pd.to_datetime('today') if self._back_date is None else pd.to_datetime(self._back_date, format='%Y-%m-%d')
-        if self.load_args.get('starting_weekday'):
-            days_difference = (today.weekday() - self.load_args['starting_weekday']) % 7
-        else:
-            days_difference = 0
-        last_specific_day = today - pd.Timedelta(days=days_difference)
-        return last_specific_day.normalize()
-
     def _generate_last_day(self, first_day: pd.Timestamp) -> pd.Timestamp:
+
+        """
+        generate the last day
+        based on the first day
+        """
+
         last_day = first_day - pd.DateOffset(**{self.load_args['time_scale']: self.load_args['history_length']})
         last_day = last_day - pd.Timedelta(days=last_day.weekday() + 1)
         return last_day.normalize()
 
     def _to_pandas_dataframe(self, path: str):
+
+        """
+        read the file
+        """
+
         # arrumar p deixar mais organizado
         kwargs = {}
         kwargs['filepath'] = f'{self.protocol}://{path}'
@@ -357,6 +480,12 @@ class FileReader(AbstractDataSet, BaseDataset):
         return df
 
     def _load(self) -> pd.DataFrame:
+
+        """
+        override the load method
+        to allow parallelization
+        """
+
         path_list = self._filesystem.find(self.path)
         path_list = self._filter(path_list)
         #dfs = pd.concat(map(self._to_pandas_dataframe, path_list))
@@ -369,8 +498,19 @@ class FileReader(AbstractDataSet, BaseDataset):
         return dfs
 
     def _save(self):
+
+        """
+        no save method
+        for now its read only
+        """
+
         return NotImplementedError
 
     def _describe(self):
+
+        """
+        default describe method
+        """
+
         return dict(filepath=self.path,
                     protocol=self.protocol)
