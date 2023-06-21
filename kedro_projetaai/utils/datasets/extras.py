@@ -151,9 +151,11 @@ class VersionedDataset(AbstractVersionedDataSet, BaseDataset): #VendasVersionedD
 
     def _generate_first_day(self, starting_weekday: int) -> pd.Timestamp:
         today = pd.to_datetime('today') if self._back_date is None else pd.to_datetime(self._back_date, format='%Y-%m-%d')
-        days_difference = (today.weekday() - starting_weekday) % 7
+        if starting_weekday is None:
+            days_difference = 0
+        else:
+            days_difference = (today.weekday() - starting_weekday) % 7
         last_specific_day = today - pd.Timedelta(days=days_difference)
-        print(last_specific_day)
         return last_specific_day
 
     def get_existing_versions(self):
@@ -328,9 +330,11 @@ class FileReader(AbstractDataSet, BaseDataset):
 
     def _generate_first_day(self):
         today = pd.to_datetime('today') if self._back_date is None else pd.to_datetime(self._back_date, format='%Y-%m-%d')
-        days_difference = (today.weekday() - self.load_args['starting_weekday']) % 7
+        if self.load_args.get('starting_weekday'):
+            days_difference = (today.weekday() - self.load_args['starting_weekday']) % 7
+        else:
+            days_difference = 0
         last_specific_day = today - pd.Timedelta(days=days_difference)
-        # TODO OLHAR PQ N PEGOU ULTIMO DOMINGO
         return last_specific_day.normalize()
 
     def _generate_last_day(self, first_day: pd.Timestamp) -> pd.Timestamp:
