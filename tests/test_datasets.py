@@ -1,11 +1,11 @@
-from kedro_projetaai.utils.datasets.datasets import (
+from kedro_projetaai.utils.readers import VersionedDataset
+from kedro_projetaai.utils.readers import (
     DatasetTypes,
     LoadLast,
     ReadFile,
     PathReader,
-    VersionedDataset,
 )
-from kedro_projetaai.utils.datasets.path_patterns import match_date_pattern
+from kedro_projetaai.utils.extra_datasets_utils.path_patterns import match_date_pattern
 import pandas as pd
 import numpy as np
 import os
