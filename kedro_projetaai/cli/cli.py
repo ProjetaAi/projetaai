@@ -5,7 +5,6 @@ import click
 import importlib
 import importlib.metadata
 from kedro_projetaai.cli.ci import ci
-from kedro_projetaai.cli.projetaai_extras import projetaai_extras
 
 from kedro_projetaai.cli.plugin import ProjetaAiCLIPlugin
 from kedro_projetaai.cli.constants import (
@@ -78,5 +77,4 @@ def setup_cli() -> click.Group:
     plugins = _import_plugins()
     _install_plugins(projetaai, plugins)
     projetaai.add_command(ci)
-    projetaai.add_command(projetaai_extras)
     return projetaai
