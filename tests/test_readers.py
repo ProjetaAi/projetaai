@@ -341,14 +341,3 @@ class test_datasets(unittest.TestCase):
         df_read = readfile_obj._load()
         self.assertIsInstance(df_read["col_0"].dtypes, np.dtypes.Int64DType)
         return
-
-    # def test_this(self):
-    #     path = 'abfs://data/refined/previsao_vendas/new_preprocessing_sales/sales_firme_diario_cliente_base/'
-    #     readfile_obj = PathReader(path=path,
-    #                             credentials={'account_name': 'stippdatalakedev',
-    #                                          'anon': False},
-    #                             read_args={'time_scale': 'M',
-    #                                        'history_length': 5,
-    #                                        'starting_weekday': 6})
-    #     readfile_obj._load()
-    #     return
