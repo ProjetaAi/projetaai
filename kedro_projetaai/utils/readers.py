@@ -12,7 +12,10 @@ import logging
 from kedro.io import AbstractDataSet
 from fsspec.utils import infer_storage_options
 from copy import deepcopy
-from kedro_projetaai.utils.extra_datasets_utils.pickle_methods import pickle_load, pickle_dump
+from kedro_projetaai.utils.extra_datasets_utils.pickle_methods import (
+    pickle_load,
+    pickle_dump,
+)
 
 # TODO: default load_config and save_config.
 # TODO: passar tudo isso para o projetaai de alguma maneira.
