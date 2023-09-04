@@ -2,7 +2,10 @@
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
 from typing import Any, Union
-from kedro_projetaai.utils.datasets.path_patterns import match_date_pattern, return_last_match
+from kedro_projetaai.utils.datasets.path_patterns import (
+    match_date_pattern,
+    return_last_match,
+)
 import pandas as pd
 import re
 import logging
@@ -14,6 +17,7 @@ from kedro_projetaai.utils.datasets.pickle_methods import pickle_load, pickle_du
 # TODO: default load_config and save_config.
 # TODO: passar tudo isso para o projetaai de alguma maneira.
 # Save versioned datasets
+
 
 class DatasetTypes(Enum):
     parquet = (pd.read_parquet, pd.DataFrame.to_parquet)
@@ -33,7 +37,11 @@ class DatasetTypes(Enum):
     @classmethod
     def _missing_(cls, value):
         choices = list(cls.__members__.keys())
-        raise ValueError("%r is not a valid %s, please choose from %s" % (value, cls.__name__, choices))
+        raise ValueError(
+            "%r is not a valid %s, please choose from %s"
+            % (value, cls.__name__, choices)
+        )
+
 
 class BaseDataset(AbstractDataSet):
 
@@ -66,7 +74,9 @@ class BaseDataset(AbstractDataSet):
         """
 
         self.path = path
-        self.version_config = version_config if version_config is not None else {"starting_weekday": None}
+        self.version_config = (
+            version_config if version_config is not None else {"starting_weekday": None}
+        )
         self.save_args = save_args if save_args is not None else {}
         self.load_args = load_args if load_args is not None else {}
         self.dtypes = self._get_dtypes_from_load_args(self.load_args)
@@ -74,7 +84,6 @@ class BaseDataset(AbstractDataSet):
         self._back_date = self.format_back_date(back_date)
         self.protocol = infer_storage_options(self.path)["protocol"]
         self.default_formating()
-
 
     def default_formating(self):
 
@@ -124,17 +133,19 @@ class BaseDataset(AbstractDataSet):
         if self.version_config.get("starting_weekday") is None:
             days_difference = 0
         else:
-            days_difference: int = (today.weekday() - self.version_config["starting_weekday"]) % 7 # type: ignore
+            days_difference: int = (today.weekday() - self.version_config["starting_weekday"]) % 7  # type: ignore
         last_specific_day = today - pd.Timedelta(days=days_difference)
         return last_specific_day
 
-    def file_manager(self, path: str=None):
+    def file_manager(self, path: str = None):
         if path == None:
             path = self.path
         try:
             return DatasetTypes[self.get_file_extension(path)]
         except:
-            raise ValueError(f"File extension not supported: {self.get_file_extension(path)}")
+            raise ValueError(
+                f"File extension not supported: {self.get_file_extension(path)}"
+            )
 
     def get_file_extension(self, path: str):
         return path.split(".")[-1]
@@ -146,12 +157,19 @@ class BaseDataset(AbstractDataSet):
 
     def _save(self, df: pd.DataFrame, path: str) -> None:
         file_manager = self.file_manager(path)
-        file_manager.write(df=self._dtypes_with_pandas(df), path=path, **self.save_args, storage_options=self._storage_options)
+        file_manager.write(
+            df=self._dtypes_with_pandas(df),
+            path=path,
+            **self.save_args,
+            storage_options=self._storage_options,
+        )
         return
 
     def _load(self, path: str) -> pd.DataFrame:
         file_manager = self.file_manager(path)
-        df = file_manager.read(path=path, **self.load_args, storage_options=self._storage_options)
+        df = file_manager.read(
+            path=path, **self.load_args, storage_options=self._storage_options
+        )
         return self._dtypes_with_pandas(df)
 
     def _describe(self) -> dict[str, Any]:
@@ -171,6 +189,7 @@ class BaseDataset(AbstractDataSet):
                 raise ValueError("dtypes must be a dict")
             return dtypes
         return {}
+
 
 class ReadFile(BaseDataset):  # VendasDataSet
 
@@ -198,7 +217,6 @@ class ReadFile(BaseDataset):  # VendasDataSet
             credentials=credentials,
         )
 
-
     def _load(self) -> pd.DataFrame:
 
         """
@@ -222,7 +240,7 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
         credentials: dict,
         load_args: dict[str, Any] = None,  # type: ignore
         version_config: dict[str, Any] = None,
-        back_date = None,  # type: ignore
+        back_date=None,  # type: ignore
         save_args: dict[str, Any] = None,
     ) -> None:
 
@@ -248,25 +266,29 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
         return formatted_path
 
     def _format_wrapper(self, path: str) -> str:
-        return path.format(**self._path_formater(path, 'date_path'),
-                           **self._path_formater(path, 'date_file'))
+        return path.format(
+            **self._path_formater(path, "date_path"),
+            **self._path_formater(path, "date_file"),
+        )
 
     def _path_formater(self, path: str, to_format: str) -> dict[str, str]:
         if f"{to_format}" in path:
             fmt = self.version_config.get(to_format)
             if fmt is None:
-                raise ValueError(f"{to_format} must be provided in version_config if it's in the path")
-            return {f'{to_format}': self.first_day.strftime(fmt)}
+                raise ValueError(
+                    f"{to_format} must be provided in version_config if it's in the path"
+                )
+            return {f"{to_format}": self.first_day.strftime(fmt)}
         return {}
 
     def _rises_if_unformatted(self):
-        placeholders = re.findall(r'\{(.*?)\}', self.path)
+        placeholders = re.findall(r"\{(.*?)\}", self.path)
         placeholders = set(placeholders)
-        placeholders.add('date_path')
-        placeholders.add('date_file')
+        placeholders.add("date_path")
+        placeholders.add("date_file")
         if len(placeholders) > 2:
-            placeholders.remove('date_path')
-            placeholders.remove('date_file')
+            placeholders.remove("date_path")
+            placeholders.remove("date_file")
             raise ValueError(f"placeholders {placeholders} are not allowed in the path")
         return
 
@@ -287,6 +309,7 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
         df = super()._load(formatted_path)
         return df
 
+
 class PathReader(BaseDataset):
 
     """
@@ -300,22 +323,23 @@ class PathReader(BaseDataset):
         read_args: dict[str, Any] = None,
         load_args: dict[str, Any] = None,
         credentials: dict = None,
-        back_date: str = None) -> None:
+        back_date: str = None,
+    ) -> None:
 
         self.read_args = self.raise_if_read_args_is_none(read_args)
 
         super().__init__(
-            path=path,
-            load_args=load_args,
-            credentials=credentials,
-            back_date=back_date)
+            path=path, load_args=load_args, credentials=credentials, back_date=back_date
+        )
         self._transform_load_config()
 
     def raise_if_read_args_is_none(self, read_args):
         if read_args is None:
-            raise ValueError("""read_args must be provided in yml file \n
+            raise ValueError(
+                """read_args must be provided in yml file \n
                             with the following arguments: \n
-                            time_scale, history_length""")
+                            time_scale, history_length"""
+            )
         return read_args
 
     def _validate_load_config(self) -> str:
@@ -359,7 +383,9 @@ class PathReader(BaseDataset):
     def _get_paths(self) -> list[str]:
         path_list = self._filesystem.find(self.path)
         if path_list is False:
-            raise ValueError(f"No files found in the given path please check if it's correct: {self.path}")
+            raise ValueError(
+                f"No files found in the given path please check if it's correct: {self.path}"
+            )
         path_list = self._filter(path_list)
         return path_list
 
@@ -394,8 +420,8 @@ class PathReader(BaseDataset):
         if self.version_config.get("starting_weekday") is None:
             days_difference = 0
         else:
-            days_difference: int = (last_day.weekday() - self.version_config["starting_weekday"]) % 7 # type: ignore
-        last_day = (last_day - pd.Timedelta(days=days_difference))
+            days_difference: int = (last_day.weekday() - self.version_config["starting_weekday"]) % 7  # type: ignore
+        last_day = last_day - pd.Timedelta(days=days_difference)
         return last_day.normalize()
 
     def _to_pandas_dataframe(self, path: str) -> pd.DataFrame:
@@ -420,7 +446,8 @@ class PathReader(BaseDataset):
             max_workers=self.read_args.get("thread_count")
         ) as executor:
             dfs = pd.concat(
-                executor.map(self._to_pandas_dataframe, self._get_paths()), ignore_index=True
+                executor.map(self._to_pandas_dataframe, self._get_paths()),
+                ignore_index=True,
             )
         logging.info(f"Loaded {self.path}")
         return dfs
@@ -434,24 +461,25 @@ class PathReader(BaseDataset):
 
         raise NotImplementedError
 
-class LoadLast(BaseDataset):
-    def __init__(self, path: str,
-                 load_args: dict = None,
-                 credentials: dict = None,
-                 save_args: dict = None,
-                 version_config: dict = None,
-                 back_date=None) -> None:
 
-        super().__init__(path,
-                         load_args,
-                         credentials,
-                         save_args,
-                         version_config,
-                         back_date)
+class LoadLast(BaseDataset):
+    def __init__(
+        self,
+        path: str,
+        load_args: dict = None,
+        credentials: dict = None,
+        save_args: dict = None,
+        version_config: dict = None,
+        back_date=None,
+    ) -> None:
+
+        super().__init__(
+            path, load_args, credentials, save_args, version_config, back_date
+        )
 
     def _get_last_from_path(self) -> str:
         path_list = self._filesystem.find(self.path)
-        date_dict = {self._get_date_from_pattern(path):path for path in path_list}
+        date_dict = {self._get_date_from_pattern(path): path for path in path_list}
         if self._back_date:
             date = max(filter(self._lower_than_back_date, date_dict.keys()))
         else:
@@ -459,7 +487,7 @@ class LoadLast(BaseDataset):
         return date_dict.get(date, self._raise_if_none())
 
     def _raise_if_none(self):
-        msg = '' if self._back_date is None else f" given {self._back_date}"
+        msg = "" if self._back_date is None else f" given {self._back_date}"
         return ValueError(f"Couldn't fild the most recent file given {self.path}" + msg)
 
     def _lower_than_back_date(self, date: str) -> bool:
