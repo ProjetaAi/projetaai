@@ -193,6 +193,11 @@ class BaseDataset(AbstractDataSet):
             return dtypes
         return {}
 
+    def _add_protocol_to_path(self, path: str):
+        if self.protocol == "file" or path.startswith(self.protocol):
+            return path
+        return f"{self.protocol}://{path}"
+
 
 class ReadFile(BaseDataset):  # VendasDataSet
 
@@ -432,6 +437,7 @@ class PathReader(BaseDataset):
         """
         read the file
         """
+        path = self._add_protocol_to_path(path)
         df = super()._load(path=path)
         return df
 
@@ -443,7 +449,7 @@ class PathReader(BaseDataset):
         """
         if self.read_args.get("thread_count") is None:
             dfs = map(self._to_pandas_dataframe, self._get_paths())
-            dfs = pd.concat(dfs, ignore_index=True)
+            return pd.concat(dfs, ignore_index=True)
 
         with ThreadPoolExecutor(
             max_workers=self.read_args.get("thread_count")
@@ -498,6 +504,7 @@ class LoadLast(BaseDataset):
 
     def _load(self) -> pd.DataFrame:
         path = self._get_last_from_path()
+        path = self._add_protocol_to_path(path)
         df = super()._load(path)
         return df
 
