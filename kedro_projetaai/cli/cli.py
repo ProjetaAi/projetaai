@@ -77,5 +77,4 @@ def setup_cli() -> click.Group:
     plugins = _import_plugins()
     _install_plugins(projetaai, plugins)
     projetaai.add_command(ci)
-
     return projetaai

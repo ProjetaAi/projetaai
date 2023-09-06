@@ -15,4 +15,4 @@ def to_snake_case(string: str) -> str:
         >>> to_snake_case('CamelCase')
         'camel_case'
     """
-    return re.sub(r'(?<!^)(?=[A-Z])', '_', string).lower()
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", string).lower()
