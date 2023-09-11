@@ -1,7 +1,7 @@
 # flake8: noqa: E501
 from concurrent.futures import ThreadPoolExecutor
 from enum import Enum
-from typing import Any, Union
+from typing import Any, Optional, Union
 from kedro_projetaai.utils.extra_datasets_utils.path_patterns import (
     match_date_pattern,
     return_last_match,
@@ -17,12 +17,12 @@ from kedro_projetaai.utils.extra_datasets_utils.pickle_methods import (
     pickle_dump,
 )
 
-# TODO: default load_config and save_config.
-# TODO: passar tudo isso para o projetaai de alguma maneira.
-# Save versioned datasets
-
-
 class DatasetTypes(Enum):
+
+    """
+
+    """
+
     parquet = (pd.read_parquet, pd.DataFrame.to_parquet)
     csv = (pd.read_csv, pd.DataFrame.to_csv)
     xlsx = (pd.read_excel, pd.DataFrame.to_excel)
@@ -30,12 +30,17 @@ class DatasetTypes(Enum):
     pickle = (pickle_load, pickle_dump)
 
     def read(self, path, *args, **kwargs):
+
+        """
+        get the read function from the enum
+        """
+
         read_func = self.value[0]
         return read_func(path, *args, **kwargs)
 
-    def write(self, df, *args, **kwargs):
+    def write(self, df, path, *args, **kwargs):
         write_func = self.value[1]
-        return write_func(df, *args, **kwargs)
+        return write_func(df, path, *args, **kwargs)
 
     @classmethod
     def _missing_(cls, value):
@@ -64,11 +69,11 @@ class BaseDataset(AbstractDataSet):
 
     def __init__(
         self,
-        path: str = None,
-        load_args: dict = None,
-        credentials: dict = None,
-        save_args: dict = None,
-        version_config: dict = None,
+        path: str,
+        load_args: Optional[dict] = None,
+        credentials: Optional[dict] = None,
+        save_args: Optional[dict] = None,
+        version_config: Optional[dict] = None,
         back_date=None,
     ) -> None:
 
@@ -140,9 +145,7 @@ class BaseDataset(AbstractDataSet):
         last_specific_day = today - pd.Timedelta(days=days_difference)
         return last_specific_day
 
-    def file_manager(self, path: str = None):
-        if path == None:
-            path = self.path
+    def file_manager(self, path: str):
         try:
             return DatasetTypes[self.get_file_extension(path)]
         except:
@@ -233,6 +236,9 @@ class ReadFile(BaseDataset):  # VendasDataSet
         df = super()._load(self.path)
         logging.info(f"Loaded {self.path}")
         return df
+
+    def _save(self, df: pd.DataFrame) -> None:
+        return super()._save(df, self.path)
 
 
 class VersionedDataset(BaseDataset):  # VendasVersionedDataset
@@ -328,10 +334,10 @@ class PathReader(BaseDataset):
     def __init__(
         self,
         path: str,
-        read_args: dict[str, Any] = None,
-        load_args: dict[str, Any] = None,
-        credentials: dict = None,
-        back_date: str = None,
+        read_args: Optional[dict[str, Any]] = None,
+        load_args: Optional[dict[str, Any]] = None,
+        credentials: Optional[dict] = None,
+        back_date: Optional[str] = None,
     ) -> None:
 
         self.read_args = self.raise_if_read_args_is_none(read_args)

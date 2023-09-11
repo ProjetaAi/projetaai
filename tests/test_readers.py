@@ -28,6 +28,7 @@ def save_files(
     format: str,
     path: str,
     name_group_edit: bool = False,
+    suffix_as_date: bool = False,
 ):
 
     suffix_name = ""
@@ -39,7 +40,10 @@ def save_files(
             if name_group_edit:
                 name = name.replace("-", "/")
                 name = "/" + name + "/"
-                suffix_name = "file"
+                if suffix_as_date:
+                    suffix_name = "file" + name.replace("/", "")
+                else:
+                    suffix_name = "file"
             generate_directory(os.path.dirname(path + "_" + name))
             datasetype_obj.write(
                 group,
@@ -71,10 +75,6 @@ def generate_dataframe(n_rows: int, n_cols: int = 2) -> pd.DataFrame:
     df = pd.DataFrame(dates).assign(**{f"col_{i}": i for i in range(n_cols)})
 
     return df
-
-
-# df = generate_dataframe(10, 2)
-
 
 class test_datasets(unittest.TestCase):
     def setUp(self) -> None:
@@ -340,4 +340,22 @@ class test_datasets(unittest.TestCase):
         )
         df_read = readfile_obj._load()
         self.assertIsInstance(df_read["col_0"].dtypes, np.dtypes.Int64DType)
+        return
+
+    def test_PathReader_year_month_folder_format(self):
+        df = generate_dataframe(270, 2)
+        max_date = df["date"].max()
+        min_date = max_date - pd.DateOffset(months=2)
+        df['date_save'] = df['date'].dt.strftime('%Y-%m')
+        save_files(df.groupby('date_save'), "parquet", TEMP_PREFIX + "test.parquet", name_group_edit=True)
+        readfile_obj = PathReader(
+            path=TEMP_PREFIX,
+            credentials=None,
+            read_args={"time_scale": "M", "history_length": 2},
+            load_args={"columns": ["date", "col_0"]},
+            back_date=None,
+        )
+        df_read = readfile_obj._load()
+        self.assertEqual(df_read['date'].max() == max_date, True)
+        self.assertEqual(df_read['date'].min() == min_date, True)
         return
