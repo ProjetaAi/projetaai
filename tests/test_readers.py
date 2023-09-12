@@ -119,7 +119,7 @@ class test_datasets(unittest.TestCase):
         and needs a proper startup.
         """
         for extension in DatasetTypes.__members__.keys():
-            if extension == 'pickle':
+            if extension == "pickle":
                 continue
             df = generate_dataframe(10, 2)
             save_files(df, extension, TEMP_PREFIX + f"test.{extension}")
@@ -129,7 +129,7 @@ class test_datasets(unittest.TestCase):
             )
             df_read = readfile_obj._load()
             self.assertIsInstance(df_read, pd.DataFrame)
-            if 'Unnamed: 0' in df_read.columns:
+            if "Unnamed: 0" in df_read.columns:
                 # This is a workaround for the fact
                 # that excel files have an extra column
                 df_read = df_read.drop(columns=["Unnamed: 0"])
@@ -429,11 +429,16 @@ class test_datasets(unittest.TestCase):
         # our min_date will be 2 months before the max_date
         # but the day will be the first day of the month
         # because our files are saved in year/month format
-        min_date = pd.to_datetime((max_date - pd.DateOffset(months=2))
-                                  .strftime("%Y-%m-01"))
-        df['date_save'] = df['date'].dt.strftime('%Y-%m')
-        save_files(df.groupby('date_save'), "parquet",
-                   TEMP_PREFIX + "test.parquet", name_group_edit=True)
+        min_date = pd.to_datetime(
+            (max_date - pd.DateOffset(months=2)).strftime("%Y-%m-01")
+        )
+        df["date_save"] = df["date"].dt.strftime("%Y-%m")
+        save_files(
+            df.groupby("date_save"),
+            "parquet",
+            TEMP_PREFIX + "test.parquet",
+            name_group_edit=True,
+        )
         readfile_obj = PathReader(
             path=TEMP_PREFIX,
             credentials=None,
@@ -442,6 +447,6 @@ class test_datasets(unittest.TestCase):
             back_date=None,
         )
         df_read = readfile_obj._load()
-        self.assertEqual(df_read['date'].max() == max_date, True)
-        self.assertEqual(df_read['date'].min() == min_date, True)
+        self.assertEqual(df_read["date"].max() == max_date, True)
+        self.assertEqual(df_read["date"].min() == min_date, True)
         return

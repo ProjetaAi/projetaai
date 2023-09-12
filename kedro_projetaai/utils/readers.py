@@ -1,4 +1,3 @@
-
 """The ProjetAAI Data Readers.
 
 This module serves as an extension to
@@ -43,7 +42,8 @@ from fsspec import filesystem
 from copy import deepcopy
 from kedro_projetaai.utils.extra_datasets_utils.pickle_methods import (
     pickle_load,
-    pickle_dump)
+    pickle_dump,
+)
 
 
 class DatasetTypes(Enum):
@@ -60,11 +60,9 @@ class DatasetTypes(Enum):
         read_func = self.value[0]
         return read_func(path, *args, **kwargs)
 
-    def write(self,
-              df: Union[pd.DataFrame, bytes],
-              path: str,
-              *args,
-              **kwargs) -> object:
+    def write(
+        self, df: Union[pd.DataFrame, bytes], path: str, *args, **kwargs
+    ) -> object:
         """Generic write function for the methods in this class."""
         write_func = self.value[1]
         return write_func(df, path, *args, **kwargs)
@@ -75,7 +73,8 @@ class DatasetTypes(Enum):
         choices = list(cls.__members__.keys())
         raise ValueError(
             "%r is not a valid %s, please choose from %s"
-            % (value, cls.__name__, choices))
+            % (value, cls.__name__, choices)
+        )
 
 
 class BaseDataset(AbstractDataSet):  # type: ignore
@@ -87,13 +86,14 @@ class BaseDataset(AbstractDataSet):  # type: ignore
         return filesystem(self.protocol, **self.credentials)
 
     def __init__(
-            self,
-            path: str,
-            load_args: Optional[dict] = None,
-            credentials: Optional[dict] = None,
-            save_args: Optional[dict] = None,
-            version_config: Optional[dict] = None,
-            back_date: Optional[str] = None) -> None:
+        self,
+        path: str,
+        load_args: Optional[dict] = None,
+        credentials: Optional[dict] = None,
+        save_args: Optional[dict] = None,
+        version_config: Optional[dict] = None,
+        back_date: Optional[str] = None,
+    ) -> None:
         """Class initialization.
 
         args:
@@ -119,8 +119,7 @@ class BaseDataset(AbstractDataSet):  # type: ignore
         """
         self.path = path
         self.version_config = (
-            version_config if version_config is not None else {
-                "starting_weekday": None}
+            version_config if version_config is not None else {"starting_weekday": None}
         )
         self.save_args = save_args if save_args is not None else {}
         self.load_args = load_args if load_args is not None else {}
@@ -168,8 +167,7 @@ class BaseDataset(AbstractDataSet):  # type: ignore
 
         return
 
-    def _generate_first_day(self,
-                            date_format: str = "%Y-%m-%d") -> pd.Timestamp:
+    def _generate_first_day(self, date_format: str = "%Y-%m-%d") -> pd.Timestamp:
         """Generates the first day based on the back_date and the history_length.
 
         This is used to filter the files in the given path.
@@ -177,20 +175,22 @@ class BaseDataset(AbstractDataSet):  # type: ignore
         today = (
             pd.to_datetime("today")
             if self._back_date is None
-            else pd.to_datetime(self._back_date, format=date_format))
+            else pd.to_datetime(self._back_date, format=date_format)
+        )
         last_specific_day = today - pd.Timedelta(days=self._generate_days_difference())
-        return self._transform_to_timestamp(last_specific_day,
-                                            format=date_format).normalize()
+        return self._transform_to_timestamp(
+            last_specific_day, format=date_format
+        ).normalize()
 
-    def _generate_last_day(self,
-                           first_day: pd.Timestamp) -> pd.Timestamp:
+    def _generate_last_day(self, first_day: pd.Timestamp) -> pd.Timestamp:
         """
         Generates the last day based on the first day and the history_length.
 
         This is used to filter the files in the given path.
         """
         last_day = first_day - pd.DateOffset(
-            **{self.read_args["time_scale"]: self.read_args["history_length"]})
+            **{self.read_args["time_scale"]: self.read_args["history_length"]}
+        )
         last_day = last_day - pd.Timedelta(days=self._generate_days_difference())
         return last_day.normalize()
 
@@ -213,7 +213,8 @@ class BaseDataset(AbstractDataSet):  # type: ignore
             return DatasetTypes[self.get_file_extension(path)]
         except KeyError:
             raise ValueError(
-                f"File extension not supported: {self.get_file_extension(path)}")
+                f"File extension not supported: {self.get_file_extension(path)}"
+            )
 
     def get_file_extension(self, path: str) -> str:
         """Returns the file extension."""
@@ -256,17 +257,14 @@ class BaseDataset(AbstractDataSet):  # type: ignore
         """Default description for kedro dataset."""
         return dict(path=self.path, protocol=self.protocol)
 
-    def _get_date_from_pattern(self,
-                               path: str,
-                               date_pattern: str) -> str:
+    def _get_date_from_pattern(self, path: str, date_pattern: str) -> str:
 
         matched_value = return_last_match(date_pattern, path)
         if matched_value is None:
             raise ValueError(f"Date pattern not found in {path}")
         return matched_value.replace("/", "-")
 
-    def _get_dtypes_from_load_args(self,
-                                   load_args: dict) -> dict[str, Any]:
+    def _get_dtypes_from_load_args(self, load_args: dict) -> dict[str, Any]:
         if "dtypes" in load_args:
             dtypes = load_args.pop("dtypes")
             if not isinstance(dtypes, dict):
@@ -279,16 +277,16 @@ class BaseDataset(AbstractDataSet):  # type: ignore
             return path
         return f"{self.protocol}://{path}"
 
-    def _transform_to_timestamp(self,
-                                date: Union[str, pd.Timestamp],
-                                format: str = "%Y-%m-%d") -> pd.Timestamp:
+    def _transform_to_timestamp(
+        self, date: Union[str, pd.Timestamp], format: str = "%Y-%m-%d"
+    ) -> pd.Timestamp:
         if isinstance(date, str):
             return pd.to_datetime(date, format=format)
         return pd.to_datetime(date.strftime(format=format), format=format)
 
-    def _check_if_all_files_are_in_the_same_format(self,
-                                                   patters: set[tuple[str,
-                                                                      str]]) -> None:
+    def _check_if_all_files_are_in_the_same_format(
+        self, patters: set[tuple[str, str]]
+    ) -> None:
         if len(patters) > 1:
             raise ValueError(
                 f"Files in the given path have different date patterns: {patters}"
@@ -304,9 +302,10 @@ class BaseDataset(AbstractDataSet):  # type: ignore
 
     def _check_and_get_patterns(self, path_list: list[str]) -> tuple[str, str]:
 
-        (date_pattern, date_format), = self._get_all_date_patterns(path_list)
+        ((date_pattern, date_format),) = self._get_all_date_patterns(path_list)
         self._check_if_all_files_are_in_the_same_format(
-            set([(date_pattern, date_format)]))
+            set([(date_pattern, date_format)])
+        )
 
         return date_pattern, date_format
 
@@ -320,11 +319,12 @@ class ReadFile(BaseDataset):
     """
 
     def __init__(
-            self,
-            path: str,
-            credentials: Optional[dict[str, Any]] = None,
-            load_args: Optional[dict[str, Any]] = None,
-            save_args: Optional[dict[str, Any]] = None) -> None:
+        self,
+        path: str,
+        credentials: Optional[dict[str, Any]] = None,
+        load_args: Optional[dict[str, Any]] = None,
+        save_args: Optional[dict[str, Any]] = None,
+    ) -> None:
         """Initialize the class.
 
         args:
@@ -374,13 +374,14 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
     """
 
     def __init__(
-            self,
-            path: str,
-            credentials: Optional[dict] = None,
-            load_args: Optional[dict[str, Any]] = None,
-            version_config: Optional[dict[str, Any]] = None,
-            back_date: Optional[str] = None,
-            save_args: Optional[dict[str, Any]] = None) -> None:
+        self,
+        path: str,
+        credentials: Optional[dict] = None,
+        load_args: Optional[dict[str, Any]] = None,
+        version_config: Optional[dict[str, Any]] = None,
+        back_date: Optional[str] = None,
+        save_args: Optional[dict[str, Any]] = None,
+    ) -> None:
         """Initialize the class.
 
         Args:
@@ -447,13 +448,12 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
         if len(placeholders) > 2:
             placeholders.remove("date_path")
             placeholders.remove("date_file")
-            raise ValueError(
-                f"placeholders {placeholders} are not allowed in the path")
+            raise ValueError(f"placeholders {placeholders} are not allowed in the path")
         return
 
-    def _save(self,
-              data: Union[pd.DataFrame, dict],
-              path: Optional[str] = None) -> None:
+    def _save(
+        self, data: Union[pd.DataFrame, dict], path: Optional[str] = None
+    ) -> None:
         """
         Save function for VersionedDataset.
 
@@ -477,12 +477,13 @@ class PathReader(BaseDataset):
     """Reads all files in the given path."""
 
     def __init__(
-            self,
-            path: str,
-            read_args: Optional[dict[str, Any]],
-            load_args: Optional[dict[str, Any]] = None,
-            credentials: Optional[dict] = None,
-            back_date: Optional[str] = None) -> None:
+        self,
+        path: str,
+        read_args: Optional[dict[str, Any]],
+        load_args: Optional[dict[str, Any]] = None,
+        credentials: Optional[dict] = None,
+        back_date: Optional[str] = None,
+    ) -> None:
         """Initialize the class.
 
         Args:
@@ -499,15 +500,13 @@ class PathReader(BaseDataset):
         """
         self.read_args = self.raise_if_read_args_is_none(read_args)
         super().__init__(
-            path=path,
-            load_args=load_args,
-            credentials=credentials,
-            back_date=back_date)
+            path=path, load_args=load_args, credentials=credentials, back_date=back_date
+        )
         self._transform_load_config()
 
-    def raise_if_read_args_is_none(self,
-                                   read_args: Optional[dict[str,
-                                                            Any]]) -> dict[str, Any]:
+    def raise_if_read_args_is_none(
+        self, read_args: Optional[dict[str, Any]]
+    ) -> dict[str, Any]:
         """Raises an error if the read_args is None."""
         if read_args is None:
             raise ValueError(
@@ -528,16 +527,17 @@ class PathReader(BaseDataset):
         """Transforms the time_scale to the pandas time scale."""
         time_scale_map = {"D": "days", "M": "months", "Y": "years"}
         current_time_scale = self._validate_load_config()
-        self.read_args["time_scale"] = time_scale_map.get(
-            current_time_scale, "days")
+        self.read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
         return
 
     def _is_within_date_range(
-            self, path: str,
-            first_day: pd.Timestamp,
-            last_day: pd.Timestamp,
-            date_format: str,
-            date_pattern: str) -> bool:
+        self,
+        path: str,
+        first_day: pd.Timestamp,
+        last_day: pd.Timestamp,
+        date_format: str,
+        date_pattern: str,
+    ) -> bool:
         """Checks if the file in the given path is within the date range."""
         date_str = self._get_date_from_pattern(path, date_pattern=date_pattern)
         date_str = self._transform_to_timestamp(date_str, format=date_format)
@@ -553,8 +553,7 @@ class PathReader(BaseDataset):
         path_list = self._filter(path_list)
         return path_list
 
-    def _filter(self,
-                path_list: list[str]) -> list[str]:
+    def _filter(self, path_list: list[str]) -> list[str]:
         """
         Gets the files in the given path that are within the date range.
 
@@ -568,11 +567,9 @@ class PathReader(BaseDataset):
         path_list = [
             path
             for path in path_list
-            if self._is_within_date_range(path,
-                                          first_day,
-                                          last_day,
-                                          date_format,
-                                          date_pattern)
+            if self._is_within_date_range(
+                path, first_day, last_day, date_format, date_pattern
+            )
         ]
         if not path_list:
             raise ValueError("No files found in the given date range")
@@ -618,12 +615,13 @@ class LoadLast(BaseDataset):
     """Reads the last file in the given path."""
 
     def __init__(
-            self,
-            path: str,
-            load_args: Optional[dict] = None,
-            credentials: Optional[dict] = None,
-            save_args: Optional[dict] = None,
-            back_date: Optional[str] = None) -> None:
+        self,
+        path: str,
+        load_args: Optional[dict] = None,
+        credentials: Optional[dict] = None,
+        save_args: Optional[dict] = None,
+        back_date: Optional[str] = None,
+    ) -> None:
         """Initialize the class.
 
         Args:
@@ -647,14 +645,16 @@ class LoadLast(BaseDataset):
             load_args=load_args,
             credentials=credentials,
             save_args=save_args,
-            back_date=back_date)
+            back_date=back_date,
+        )
 
     def _get_last_from_path(self) -> str:
         """Returns the path of the most recent file in the given path."""
         path_list = self._filesystem.find(self.path)
         date_pattern, date_format = self._check_and_get_patterns(path_list)
-        date_dict = {self._get_date_from_pattern(
-            path, date_pattern): path for path in path_list}
+        date_dict = {
+            self._get_date_from_pattern(path, date_pattern): path for path in path_list
+        }
         if self._back_date:
             date = max(filter(self._lower_than_back_date, date_dict.keys()))
         else:

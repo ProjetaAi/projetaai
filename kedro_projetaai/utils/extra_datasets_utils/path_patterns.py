@@ -25,7 +25,8 @@ def yield_patterns() -> Generator[tuple[str, str], None, None]:
             m=date_format["m"],
             d=date_format["d"],
             sep=sep,
-            sep1=sep1), '-'.join(["%" + i for i in date_format if date_format[i] != ""])
+            sep1=sep1,
+        ), "-".join(["%" + i for i in date_format if date_format[i] != ""])
 
 
 def string_format(string: str) -> str:

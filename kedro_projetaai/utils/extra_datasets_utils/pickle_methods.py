@@ -1,4 +1,3 @@
-
 """Module to load and dump pickle files from/to a filesystem.
 
 Creates functions to load and dump pickle files from/to cloud.
@@ -18,10 +17,12 @@ def infer_filesystem_method(path: str, _filesystem_method: Optional[dict]) -> di
     return _filesystem_method
 
 
-def pickle_load(path: str,
-                storage_options: dict,
-                _filesystem_method: Optional[dict] = None,
-                **kwargs) -> object:
+def pickle_load(
+    path: str,
+    storage_options: dict,
+    _filesystem_method: Optional[dict] = None,
+    **kwargs
+) -> object:
     """Function to load a pickle file from a given path.
 
     Uses fsspec.open to open the file and pickle.load to load the data from cloud
@@ -31,11 +32,13 @@ def pickle_load(path: str,
         return pickle.load(file, **kwargs)  # type: ignore
 
 
-def pickle_dump(data: bytes,
-                path: str,
-                storage_options: dict[str, Any],
-                _filesystem_method: Optional[dict[str, Any]] = None,
-                **kwargs) -> None:
+def pickle_dump(
+    data: bytes,
+    path: str,
+    storage_options: dict[str, Any],
+    _filesystem_method: Optional[dict[str, Any]] = None,
+    **kwargs
+) -> None:
     """Function to dump a pickle file to a given path.
 
     It uses fsspec.open to open the file and pickle.dump to dump the data to
