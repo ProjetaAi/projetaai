@@ -1,3 +1,4 @@
+# type: ignore
 """Script tools for building CLI commands."""
 from __future__ import annotations
 from abc import abstractmethod

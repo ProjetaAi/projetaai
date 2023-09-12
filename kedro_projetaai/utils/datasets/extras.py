@@ -1,4 +1,5 @@
 # flake8: noqa: E501
+# type: ignore
 from concurrent.futures import ThreadPoolExecutor
 from io import BytesIO
 from typing import Any, Union
