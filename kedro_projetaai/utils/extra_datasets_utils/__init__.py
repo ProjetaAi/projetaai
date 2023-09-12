@@ -1,0 +1,1 @@
+"""ProjetaAi readers extension package."""
