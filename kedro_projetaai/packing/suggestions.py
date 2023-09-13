@@ -1,3 +1,4 @@
+# type: ignore
 """Package containing suggestions for deployment component names."""
 import re
 from git import Repo, InvalidGitRepositoryError

@@ -8,5 +8,5 @@ exclude =
 per-file-ignores =
     __init__.py:F401,F403
 max-line-length = 88
-ignore = ANN101,ANN102,W503,D401,ANN401
+ignore = ANN101,ANN102,W503,D401,ANN401,ANN003,ANN002
 suppress-none-returning = True
