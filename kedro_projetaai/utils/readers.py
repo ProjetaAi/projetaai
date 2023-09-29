@@ -416,10 +416,21 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
             back_date=back_date,
         )
 
+    def _first_day_versioned(self) -> str:
+        """
+        generate the day we will read given
+        the back_date and the starting_weekday
+        """
+        day_to_read = (pd.to_datetime('today') if self._back_date is None
+                       else self._back_date)
+        delta = (day_to_read.weekday() - self.version_config["starting_weekday"]) % 7
+        day_to_read = day_to_read - pd.Timedelta(days=delta)
+        return self._transform_to_timestamp(day_to_read).normalize()
+
     def _generate_formatted_path(self) -> str:
         """Formats the path based on the date_path and date_file placeholders."""
         self._rises_if_unformatted()
-        self.first_day = self._generate_first_day()
+        self.day_to_read = self._first_day_versioned()
         formatted_path = self._format_wrapper(self.path)
         return formatted_path
 
@@ -437,12 +448,11 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
                     f"""{to_format} must be provided in
                     version_config if it's in the path"""
                 )
-            return {f"{to_format}": self.first_day.strftime(fmt)}
+            return {f"{to_format}": self.day_to_read.strftime(fmt)}
         return {}
 
     def _rises_if_unformatted(self):
-        placeholders = re.findall(r"\{(.*?)\}", self.path)
-        placeholders = set(placeholders)
+        placeholders = set(re.findall(r"\{(.*?)\}", self.path))
         placeholders.add("date_path")
         placeholders.add("date_file")
         if len(placeholders) > 2:

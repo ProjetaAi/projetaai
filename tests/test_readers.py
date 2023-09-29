@@ -325,6 +325,28 @@ class test_datasets(unittest.TestCase):
         remove_files()
         return
 
+    def test_VersionedDataSet_weekday(self):
+            """Test if the VersionedDataset class is working correctly."""
+            df = generate_dataframe(90, 2)
+            today = pd.to_datetime("today")#.strftime("%Y-%m-%d")
+            today = today - pd.Timedelta(days=today.weekday())
+            today = today.strftime("%Y-%m-%d")
+            os.makedirs(TEMP_PREFIX + f"/{today}")
+            df.to_parquet(TEMP_PREFIX + f"/{today}/" + f"test_{today}.parquet")
+            filepath = TEMP_PREFIX + "{date_path}/test_{date_file}.parquet"
+            readfile_obj = VersionedDataset(
+                path=filepath,
+                credentials=None,
+                version_config={"date_path": "%Y-%m-%d",
+                                "date_file": "%Y-%m-%d",
+                                'starting_weekday': 0},
+            )
+            df_load = readfile_obj._load()
+            self.assertEqual(df_load.equals(df))
+            remove_files()
+            return
+
+
     def test_abfs_path(self):
         """Test if the abfs path is being read correctly."""
         path = "abfs://account_name.dfs.core.windows.net/test/test.parquet"
