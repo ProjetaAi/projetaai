@@ -332,16 +332,19 @@ class test_datasets(unittest.TestCase):
         df = generate_dataframe(90, 2)
         today = pd.to_datetime("today")
         today = today - pd.Timedelta(days=today.weekday())
-        today = today.strftime("%Y-%m-%d")
-        os.makedirs(TEMP_PREFIX + f"/{today}")
-        df.to_parquet(TEMP_PREFIX + f"/{today}/" + f"test_{today}.parquet")
+        back_date = today.strftime("%Y-%m-%d")
+        test_day = today - pd.Timedelta(days=2)
+        test_day = test_day.strftime("%Y-%m-%d")
+        os.makedirs(TEMP_PREFIX + f"/{test_day}")
+        df.to_parquet(TEMP_PREFIX + f"/{test_day}/" + f"test_{test_day}.parquet")
         filepath = TEMP_PREFIX + "{date_path}/test_{date_file}.parquet"
         readfile_obj = VersionedDataset(
             path=filepath,
             credentials=None,
             version_config={"date_path": "%Y-%m-%d",
                             "date_file": "%Y-%m-%d",
-                            'starting_weekday': 0},
+                            'starting_weekday': 5},
+            back_date=back_date,
         )
         df_load = readfile_obj._load()
         self.assertTrue(df_load.equals(df))
