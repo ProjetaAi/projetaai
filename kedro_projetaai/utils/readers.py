@@ -421,12 +421,15 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
         generate the day we will read given
         the back_date and the starting_weekday
         """
-        day_to_read = (pd.to_datetime('today') if self._back_date is None
-                       else pd.to_datetime(self._back_date,
-                                           format="%Y-%m-%d"))
+        day_to_read = (
+            pd.to_datetime("today")
+            if self._back_date is None
+            else pd.to_datetime(self._back_date, format="%Y-%m-%d")
+        )
         if self.version_config.get("starting_weekday", None):
-            delta = (day_to_read.weekday()
-                     - self.version_config["starting_weekday"]) % 7
+            delta = (
+                day_to_read.weekday() - self.version_config["starting_weekday"]
+            ) % 7
         else:
             delta = 0
         day_to_read = day_to_read - pd.Timedelta(days=delta)

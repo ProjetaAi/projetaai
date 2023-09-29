@@ -364,9 +364,11 @@ class test_datasets(unittest.TestCase):
         readfile_obj = VersionedDataset(
             path=filepath,
             credentials=None,
-            version_config={"date_path": "%Y-%m-%d",
-                            "date_file": "%Y-%m-%d",
-                            'starting_weekday': 5},
+            version_config={
+                "date_path": "%Y-%m-%d",
+                "date_file": "%Y-%m-%d",
+                "starting_weekday": 5,
+            },
             back_date=back_date,
         )
         df_load = readfile_obj._load()
