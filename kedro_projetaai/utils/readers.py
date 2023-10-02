@@ -416,7 +416,7 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
             back_date=back_date,
         )
 
-    def _first_day_versioned(self) -> str:
+    def _first_day_versioned(self) -> pd.Timestamp:
         """
         Generate day_to_read variable.
 
