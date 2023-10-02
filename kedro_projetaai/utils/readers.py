@@ -494,7 +494,7 @@ class PathReader(BaseDataset):
     def __init__(
         self,
         path: str,
-        read_args: Optional[dict[str, Any]],
+        read_args: Optional[dict[str, Any]] = None,
         load_args: Optional[dict[str, Any]] = None,
         credentials: Optional[dict] = None,
         back_date: Optional[str] = None,
@@ -513,22 +513,18 @@ class PathReader(BaseDataset):
                 starting_weekday: int, the starting weekday to
                 use as reference to read data.
         """
-        self.read_args = self.raise_if_read_args_is_none(read_args)
+        self.read_args = self._if_read_args_is_none(read_args)
         super().__init__(
             path=path, load_args=load_args, credentials=credentials, back_date=back_date
         )
-        self._transform_load_config()
 
-    def raise_if_read_args_is_none(
+    def _if_read_args_is_none(
         self, read_args: Optional[dict[str, Any]]
     ) -> dict[str, Any]:
         """Raises an error if the read_args is None."""
         if read_args is None:
-            raise ValueError(
-                """read_args must be provided in yml file \n
-                            with the following arguments: \n
-                            time_scale, history_length"""
-            )
+            return {}
+        self._transform_load_config()
         return read_args
 
     def _validate_load_config(self) -> str:
@@ -538,11 +534,11 @@ class PathReader(BaseDataset):
             raise ValueError("time_scale must be provided in yml file")
         return current_time_scale
 
-    def _transform_load_config(self) -> None:
+    def _transform_load_config(self, read_args: dict) -> None:
         """Transforms the time_scale to the pandas time scale."""
         time_scale_map = {"D": "days", "M": "months", "Y": "years"}
         current_time_scale = self._validate_load_config()
-        self.read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
+        read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
         return
 
     def _is_within_date_range(
@@ -565,7 +561,8 @@ class PathReader(BaseDataset):
                 f"""No files found in the given path
                 please check if it's correct: {self.path}"""
             )
-        path_list = self._filter(path_list)
+        if self.read_args:
+            path_list = self._filter(path_list)
         return path_list
 
     def _filter(self, path_list: list[str]) -> list[str]:
