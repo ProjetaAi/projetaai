@@ -517,19 +517,22 @@ class PathReader(BaseDataset):
                 starting_weekday: int, the starting weekday to
                 use as reference to read data.
         """
-        self.read_args = self._if_read_args_is_none(read_args)
+        self._if_read_args_is_none(read_args)
         super().__init__(
             path=path, load_args=load_args, credentials=credentials, back_date=back_date
         )
 
+    def _set_read_args(self, read_args: dict):
+        self.read_args = self._if_read_args_is_none(read_args)
+        return
+
     def _if_read_args_is_none(
         self, read_args: Optional[dict[str, Any]]
-    ) -> dict[str, Any]:
+    ) -> dict:
         """Raises an error if the read_args is None."""
         if read_args is None:
             return {}
-        self._transform_load_config()
-        return read_args
+        return self._transform_load_config()
 
     def _validate_load_config(self) -> str:
         """Validates the time_scale argument in the read_args."""
@@ -538,11 +541,11 @@ class PathReader(BaseDataset):
             raise ValueError("time_scale must be provided in yml file")
         return current_time_scale
 
-    def _transform_load_config(self, read_args: dict) -> None:
+    def _transform_load_config(self) -> None:
         """Transforms the time_scale to the pandas time scale."""
         time_scale_map = {"D": "days", "M": "months", "Y": "years"}
         current_time_scale = self._validate_load_config()
-        read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
+        self.read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
         return
 
     def _is_within_date_range(
