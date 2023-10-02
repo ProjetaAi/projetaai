@@ -418,8 +418,9 @@ class VersionedDataset(BaseDataset):  # VendasVersionedDataset
 
     def _first_day_versioned(self) -> str:
         """
-        generate the day we will read given
-        the back_date and the starting_weekday
+        Generate day_to_read variable.
+
+        This is the weekday we are versioning the data.
         """
         day_to_read = (
             pd.to_datetime("today")

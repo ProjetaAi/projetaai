@@ -349,9 +349,11 @@ class test_datasets(unittest.TestCase):
         return
 
     def test_VersionedDataSet_weekday(self):
-        """Test if the VersionedDataset class is working correctly.
+        """
+        Test if the VersionedDataset class is working correctly.
 
-        this in particular tests if it works well with starting_weekday"""
+        this in particular tests if it works well with starting_weekday
+        """
         df = generate_dataframe(90, 2)
         today = pd.to_datetime("today")
         today = today - pd.Timedelta(days=today.weekday())
