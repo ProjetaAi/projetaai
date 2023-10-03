@@ -45,6 +45,8 @@ from kedro_projetaai.utils.extra_datasets_utils.pickle_methods import (
     pickle_dump,
 )
 
+TIME_SCALE_MAP = {"D": "days", "M": "months", "Y": "years"}
+
 
 class DatasetTypes(Enum):
     """Abstracts the read and write methods for each file extension."""
@@ -517,35 +519,31 @@ class PathReader(BaseDataset):
                 starting_weekday: int, the starting weekday to
                 use as reference to read data.
         """
-        self._if_read_args_is_none(read_args)
+        self._setting_read_args(read_args)
         super().__init__(
             path=path, load_args=load_args, credentials=credentials, back_date=back_date
         )
 
-    def _set_read_args(self, read_args: dict):
-        self.read_args = self._if_read_args_is_none(read_args)
-        return
-
-    def _if_read_args_is_none(
+    def _setting_read_args(
         self, read_args: Optional[dict[str, Any]]
     ) -> dict:
         """Raises an error if the read_args is None."""
-        if read_args is None:
-            return {}
-        return self._transform_load_config()
+        self.read_args = {} if read_args is None else read_args
+        self._transform_time_scale()
+        return
 
-    def _validate_load_config(self) -> str:
+    def _validate_read_args_config(self) -> str:
         """Validates the time_scale argument in the read_args."""
         current_time_scale = self.read_args.get("time_scale", None)
         if current_time_scale is None:
             raise ValueError("time_scale must be provided in yml file")
         return current_time_scale
 
-    def _transform_load_config(self) -> None:
+    def _transform_time_scale(self) -> None:
         """Transforms the time_scale to the pandas time scale."""
-        time_scale_map = {"D": "days", "M": "months", "Y": "years"}
-        current_time_scale = self._validate_load_config()
-        self.read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
+        if self.read_args:
+            self.read_args["time_scale"] = TIME_SCALE_MAP.get(
+                self._validate_read_args_config(), "days")
         return
 
     def _is_within_date_range(
