@@ -269,6 +269,29 @@ class test_datasets(unittest.TestCase):
         remove_files()
         return
 
+    def test_PathReader_read_all(self):
+        """
+        Test if the PathReader class is working correctly.
+
+        if read_args is not provided, it will read all files in path
+        and return it as a dataframe
+        """
+        df = generate_dataframe(270, 2)
+        save_files(
+            df.groupby(df["date"].dt.strftime("%Y-%m-%d")),
+            "parquet",
+            TEMP_PREFIX + "test.parquet",
+            name_group_edit=True,
+        )
+        readfile_obj = PathReader(
+            path=TEMP_PREFIX,
+            credentials=None,
+        )
+        df_read = readfile_obj._load()
+        self.assertTrue(df_read.equals(df))
+        remove_files()
+        return
+
     def test_PathReader_back_date(self):
         """Test if the backdate is being applied correctly in PathReader."""
         df = generate_dataframe(300, 2)

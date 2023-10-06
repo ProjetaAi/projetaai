@@ -45,6 +45,8 @@ from kedro_projetaai.utils.extra_datasets_utils.pickle_methods import (
     pickle_dump,
 )
 
+TIME_SCALE_MAP = {"D": "days", "M": "months", "Y": "years"}
+
 
 class DatasetTypes(Enum):
     """Abstracts the read and write methods for each file extension."""
@@ -498,7 +500,7 @@ class PathReader(BaseDataset):
     def __init__(
         self,
         path: str,
-        read_args: Optional[dict[str, Any]],
+        read_args: Optional[dict[str, Any]] = None,
         load_args: Optional[dict[str, Any]] = None,
         credentials: Optional[dict] = None,
         back_date: Optional[str] = None,
@@ -517,36 +519,30 @@ class PathReader(BaseDataset):
                 starting_weekday: int, the starting weekday to
                 use as reference to read data.
         """
-        self.read_args = self.raise_if_read_args_is_none(read_args)
+        self._setting_read_args(read_args)
         super().__init__(
             path=path, load_args=load_args, credentials=credentials, back_date=back_date
         )
-        self._transform_load_config()
 
-    def raise_if_read_args_is_none(
-        self, read_args: Optional[dict[str, Any]]
-    ) -> dict[str, Any]:
+    def _setting_read_args(self, read_args: Optional[dict[str, Any]]):
         """Raises an error if the read_args is None."""
-        if read_args is None:
-            raise ValueError(
-                """read_args must be provided in yml file \n
-                            with the following arguments: \n
-                            time_scale, history_length"""
-            )
-        return read_args
+        self.read_args = {} if read_args is None else read_args
+        self._transform_time_scale()
+        return
 
-    def _validate_load_config(self) -> str:
+    def _validate_read_args_config(self) -> str:
         """Validates the time_scale argument in the read_args."""
         current_time_scale = self.read_args.get("time_scale", None)
         if current_time_scale is None:
             raise ValueError("time_scale must be provided in yml file")
         return current_time_scale
 
-    def _transform_load_config(self) -> None:
+    def _transform_time_scale(self) -> None:
         """Transforms the time_scale to the pandas time scale."""
-        time_scale_map = {"D": "days", "M": "months", "Y": "years"}
-        current_time_scale = self._validate_load_config()
-        self.read_args["time_scale"] = time_scale_map.get(current_time_scale, "days")
+        if self.read_args:
+            self.read_args["time_scale"] = TIME_SCALE_MAP.get(
+                self._validate_read_args_config(), "days"
+            )
         return
 
     def _is_within_date_range(
@@ -564,12 +560,13 @@ class PathReader(BaseDataset):
 
     def _get_paths(self) -> list[str]:
         path_list = self._filesystem.find(self.path)
-        if path_list is False:
+        if path_list:
             raise ValueError(
                 f"""No files found in the given path
                 please check if it's correct: {self.path}"""
             )
-        path_list = self._filter(path_list)
+        if self.read_args:
+            path_list = self._filter(path_list)
         return path_list
 
     def _filter(self, path_list: list[str]) -> list[str]:
