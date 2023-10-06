@@ -561,7 +561,7 @@ class PathReader(BaseDataset):
 
     def _get_paths(self) -> list[str]:
         path_list = self._filesystem.find(self.path)
-        if path_list is False:
+        if path_list:
             raise ValueError(
                 f"""No files found in the given path
                 please check if it's correct: {self.path}"""
