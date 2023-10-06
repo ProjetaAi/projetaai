@@ -524,9 +524,7 @@ class PathReader(BaseDataset):
             path=path, load_args=load_args, credentials=credentials, back_date=back_date
         )
 
-    def _setting_read_args(
-        self, read_args: Optional[dict[str, Any]]
-    ) -> dict:
+    def _setting_read_args(self, read_args: Optional[dict[str, Any]]) -> dict:
         """Raises an error if the read_args is None."""
         self.read_args = {} if read_args is None else read_args
         self._transform_time_scale()
@@ -543,7 +541,8 @@ class PathReader(BaseDataset):
         """Transforms the time_scale to the pandas time scale."""
         if self.read_args:
             self.read_args["time_scale"] = TIME_SCALE_MAP.get(
-                self._validate_read_args_config(), "days")
+                self._validate_read_args_config(), "days"
+            )
         return
 
     def _is_within_date_range(
