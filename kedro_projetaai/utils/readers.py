@@ -524,7 +524,7 @@ class PathReader(BaseDataset):
             path=path, load_args=load_args, credentials=credentials, back_date=back_date
         )
 
-    def _setting_read_args(self, read_args: Optional[dict[str, Any]]) -> dict:
+    def _setting_read_args(self, read_args: Optional[dict[str, Any]]):
         """Raises an error if the read_args is None."""
         self.read_args = {} if read_args is None else read_args
         self._transform_time_scale()
