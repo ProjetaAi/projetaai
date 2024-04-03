@@ -195,8 +195,8 @@ class BaseDataset(AbstractDataSet):  # type: ignore
 
         This is used to filter the files in the given path.
         """
-        if 'min_date' in self.read_args.keys():
-            last_day = pd.to_datetime(self.read_args['min_date'], format='%Y-%m-%d')
+        if "min_date" in self.read_args.keys():
+            last_day = pd.to_datetime(self.read_args["min_date"], format="%Y-%m-%d")
 
         else:
             last_day = first_day - pd.DateOffset(
@@ -236,7 +236,7 @@ class BaseDataset(AbstractDataSet):  # type: ignore
         if isinstance(df, pd.DataFrame):
             return df.astype(self.dtypes)
         return df
-    
+
     def _build_regex(self, folder_path):
         """
         Transform a path string using * wildcards to a regex pattern
@@ -251,21 +251,21 @@ class BaseDataset(AbstractDataSet):  # type: ignore
             that matches every parquet file that has 'features_' in its name
             and is inside folders starting with 20.
         """
-        opts = re.compile('([.]|[*][*]/|[*]|[?])|(.)')
-        out = ''
+        opts = re.compile("([.]|[*][*]/|[*]|[?])|(.)")
+        out = ""
         for (pattern_match, literal_text) in opts.findall(folder_path):
-            if pattern_match == '.':
-                out += '[.]'
-            elif pattern_match == '**/':
-                out += '(?:.*/)?'
-            elif pattern_match == '*':
-                out += '[^/]*'
-            elif pattern_match == '?':
-                out += '.'
+            if pattern_match == ".":
+                out += "[.]"
+            elif pattern_match == "**/":
+                out += "(?:.*/)?"
+            elif pattern_match == "*":
+                out += "[^/]*"
+            elif pattern_match == "?":
+                out += "."
             elif literal_text:
                 out += literal_text
         return out
-    
+
     def _save(self, df: pd.DataFrame, path: str) -> None:
         """The default save method for all classes that inherit from this class.
 
@@ -565,8 +565,8 @@ class PathReader(BaseDataset):
     def _setting_read_args(self, read_args: Optional[dict[str, Any]]):
         """Raises an error if the read_args is None."""
         self.read_args = {} if read_args is None else read_args
-        if 'min_date' not in self.read_args:
-            self._transform_time_scale() # not needed if min_date is passed
+        if "min_date" not in self.read_args:
+            self._transform_time_scale()  # not needed if min_date is passed
         return
 
     def _validate_read_args_config(self) -> str:
@@ -597,41 +597,48 @@ class PathReader(BaseDataset):
         date_str = self._transform_to_timestamp(date_str, format=date_format)
         return first_day >= date_str >= last_day
 
-
     def _str_to_function(self, func_string) -> tuple[callable, str]:
         """Converts a function string to (callable, args) tuple"""
-        import_string, args_string = func_string.split('(', maxsplit=1)
-        args_string = args_string.removesuffix(')')
-        import_string = import_string.rsplit('.', maxsplit=1)
+        import_string, args_string = func_string.split("(", maxsplit=1)
+        args_string = args_string.removesuffix(")")
+        import_string = import_string.rsplit(".", maxsplit=1)
         func = getattr(importlib.import_module(import_string[0]), import_string[1])
         return func, args_string
 
     def _apply_filefunc(self, df) -> pd.DataFrame:
         """
         Applies a function passed in the read arguments to a pandas dataframe.
-        Target function first argument must always be 'df'. 
+        Target function first argument must always be 'df'.
         """
-        func, args_string = self._str_to_function(self.read_args['file_func'])
-        return func(eval(args_string)) if args_string == 'df' else func(*eval(args_string))
-    
+        func, args_string = self._str_to_function(self.read_args["file_func"])
+        return (
+            func(eval(args_string)) if args_string == "df" else func(*eval(args_string))
+        )
+
     def _apply_pathfunc(self, paths) -> list[str]:
         """
-        Applies a function passed in the read arguments to a path list. 
-        Target function first argument must always be 'paths'. 
+        Applies a function passed in the read arguments to a path list.
+        Target function first argument must always be 'paths'.
         """
-        func, args_string = self._str_to_function(self.read_args['path_func'])
-        return func(eval(args_string)) if args_string == 'paths' else func(*eval(args_string))
+        func, args_string = self._str_to_function(self.read_args["path_func"])
+        return (
+            func(eval(args_string))
+            if args_string == "paths"
+            else func(*eval(args_string))
+        )
 
     def _get_paths(self) -> list[str]:
         # Ensures a path that is compatible with _filesystem.find
-        safe_path = self.path.split('*')[0].rsplit('/', maxsplit=1)[0]
+        safe_path = self.path.split("*")[0].rsplit("/", maxsplit=1)[0]
         path_list = self._filesystem.find(safe_path)
 
-        if 'path_func' in self.read_args:
+        if "path_func" in self.read_args:
             path_list = self._apply_pathfunc(path_list)
 
-        if len(self.path.split('*')) > 0:
-            regex_folder = self._build_regex(self.path.removeprefix(f"{self.protocol}://"))
+        if len(self.path.split("*")) > 0:
+            regex_folder = self._build_regex(
+                self.path.removeprefix(f"{self.protocol}://")
+            )
             path_list = [path for path in path_list if re.search(regex_folder, path)]
 
         if (path_list is False) | (path_list == []):
@@ -670,15 +677,15 @@ class PathReader(BaseDataset):
         path = self._add_protocol_to_path(path)
         df = super()._load(path=path)
 
-        df['origin'] = path # Path as columns for versioning necessities
+        df["origin"] = path  # Path as columns for versioning necessities
 
         # Apply a function on each loaded dataframe before concatenating
-        if 'file_func' in self.read_args:
+        if "file_func" in self.read_args:
             df = self._apply_filefunc(df)
 
-        if not(self.read_args.get('keep_origin_col', False)):
-            df = df.drop(columns = ['origin'])
-        
+        if not (self.read_args.get("keep_origin_col", False)):
+            df = df.drop(columns=["origin"])
+
         return df
 
     def _load(self, path: Optional[str] = None) -> pd.DataFrame:
