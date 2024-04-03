@@ -10,6 +10,9 @@ CLI_MODULES = [
     "run",
     "new",
     "starter",
+    "repodevops",
+    "pipelinedevops",
+    "parametersdevops",
 ]
 
 CLI_MODULES_HELP = {
